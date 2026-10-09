@@ -134,11 +134,51 @@ function getAdaptiveSubjectTheme(subject: string = '', topic: string = '') {
   };
 }
 
+// Helper to strip any breadcrumb or navigation progress indicator chain (e.g. Cover ➔ Navigasi ...)
+function sanitizeHeaderText(text: string): string {
+  if (!text) return "";
+  let cleaned = text;
+  
+  const breadcrumbRegexes = [
+    /\[?Cover\s*(➔|->|→|=>|>|•|&bull;)\s*Navigasi\s*(➔|->|→|=>|>|•|&bull;)\s*Materi\s*(➔|->|→|=>|>|•|&bull;)\s*Kuis\s*(➔|->|→|=>|>|•|&bull;)\s*Selesai\]?/gi,
+    /\[?Cover\s*(➔|->|→|=>|>|•|&bull;)\s*Navigasi\s*(➔|->|→|=>|>|•|&bull;)\s*Tujuan\s*(➔|->|→|=>|>|•|&bull;)\s*Kuis\s*(➔|->|→|=>|>|•|&bull;)\s*Selesai\]?/gi,
+    /\[?Cover\s*(➔|->|→|=>|>|•|&bull;)\s*Navigasi\s*(➔|->|→|=>|>|•|&bull;)\s*Apersepsi\s*(➔|->|→|=>|>|•|&bull;)\s*Materi\s*(➔|->|→|=>|>|•|&bull;)\s*Video\s*(➔|->|→|=>|>|•|&bull;)\s*Kuis\s*(➔|->|→|=>|>|•|&bull;)\s*Selesai\]?/gi,
+    /\[?Cover\s*(➔|->|→|=>|>|•|&bull;)\s*Navigasi\s*(➔|->|→|=>|>|•|&bull;)\s*Tujuan\s*(➔|->|→|=>|>|•|&bull;)\s*Apersepsi\s*(➔|->|→|=>|>|•|&bull;)\s*Peta\s*(➔|->|→|=>|>|•|&bull;)\s*Kuis\s*(➔|->|→|=>|>|•|&bull;)\s*Selesai\]?/gi,
+    /Cover\s*➔\s*Navigasi\s*➔\s*Materi\s*➔\s*Kuis\s*➔\s*Selesai/gi,
+    /Cover\s*➔\s*Navigasi\s*➔\s*Tujuan\s*➔\s*Kuis\s*➔\s*Selesai/gi,
+    /Cover\s*➔\s*Navigasi\s*➔\s*Apersepsi\s*➔\s*Materi\s*➔\s*Video\s*➔\s*Kuis\s*➔\s*Selesai/gi,
+    /\[?Cover\s*(➔|->|→|=>|>)\s*Navigasi\s*(➔|->|→|=>|>)\s*Materi\s*(➔|->|→|=>|>)\s*Kuis\s*(➔|->|→|=>|>)\s*Selesai\]?/gi
+  ];
+
+  for (const regex of breadcrumbRegexes) {
+    cleaned = cleaned.replace(regex, "");
+  }
+
+  // Remove loose arrows or brackets
+  cleaned = cleaned.replace(/^\s*(➔|->|→|=>|>)\s*/, "");
+  cleaned = cleaned.replace(/\s*(➔|->|→|=>|>)\s*$/, "");
+  cleaned = cleaned.replace(/\[\s*\]/g, "");
+  
+  return cleaned.trim();
+}
+
+// Helper to parse data URL into mimeType and pure base64 string
+function parseDataUrl(dataUrl: string) {
+  if (!dataUrl) return null;
+  const matches = dataUrl.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
+  if (!matches) return null;
+  return {
+    mimeType: matches[1],
+    base64Data: matches[2]
+  };
+}
+
 // Server-side fallback prompt generator strictly following Master Prompt rules
 function generateServerFallbackPrompts(payload: any) {
   const { subject = 'IPAS / Sains', topic, ageGroup, pages, layout, visualStyle = 'Clean 2D Vector / Flat Cartoon', detailLevel = 'clean-minimalis', mascot } = payload;
   const theme = getAdaptiveSubjectTheme(subject, topic);
   const aspect = layout === 'portrait' ? '9:16 vertical portrait' : '16:9 landscape';
+
 
   let characterClause = "Left side features a friendly, smiling tutor character gesturing politely towards the content";
   if (mascot?.type === 'none') {
@@ -224,16 +264,7 @@ function generateServerFallbackPrompts(payload: any) {
       slideSpecific = `Right side features a large clean white rounded card container with generous whitespace displaying key concepts of "${pageTitle}". Left side has ${characterClause}. Background features ${theme.bg}.`;
     }
 
-    // Determine active progress tracker label based on slide type (navigasi lokasi)
-    let trackerLabel = "Materi";
-    if (titleLower.includes('cover') || titleLower.includes('sampul')) trackerLabel = "Cover";
-    else if (titleLower.includes('navigasi') || titleLower.includes('menu')) trackerLabel = "Menu";
-    else if (titleLower.includes('kuis') || titleLower.includes('benar') || titleLower.includes('salah')) trackerLabel = "Kuis";
-    else if (titleLower.includes('penutup') || titleLower.includes('selesai') || titleLower.includes('rangkuman')) trackerLabel = "Selesai";
-
-    const progressTrackerClause = `Top edge of the slide features a subtle, minimalist progress bar breadcrumb tracker: [Cover ➔ Navigasi ➔ Materi ➔ Kuis ➔ Selesai], with the active section "${trackerLabel}" beautifully highlighted in a clean colored rounded badge pill`;
-
-    const cleanPrompt = `Clean educational presentation slide UI, ${aspect} aspect ratio. Style: ${visualStyle}. ${progressTrackerClause}. ${characterClause}. ${slideSpecific}. ${detailClause}. Soft ambient studio lighting, sharp focus, 8k resolution, UI/UX educational presentation mockup.`;
+    const cleanPrompt = `Clean educational presentation slide UI, ${aspect} aspect ratio. Style: ${visualStyle}. ${characterClause}. ${slideSpecific}. ${detailClause}. Soft ambient studio lighting, sharp focus, 8k resolution, UI/UX educational presentation mockup.`;
     const midjourneyPrompt = `${cleanPrompt} --ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw`;
 
     const structuredSpec = `📐 Layout: ${layout === 'portrait' ? '9:16 Portrait (1080x1920 px)' : '16:9 Landscape (1920x1080 px)'}
@@ -247,13 +278,40 @@ function generateServerFallbackPrompts(payload: any) {
 🎨 Palet Warna: ${theme.palette}
 🔍 Kata Kunci Canva: ${theme.canvaKeywords}`;
 
+    const getFallbackSlideContent = (title: string) => {
+      const tLower = title.toLowerCase();
+      if (tLower.includes('cover') || tLower.includes('sampul')) {
+        return [`Mata Pelajaran: ${subject}`, `Topik: ${topic}`, `Target: ${ageGroup}`];
+      }
+      if (tLower.includes('navigasi') || tLower.includes('menu')) {
+        return ["✓ Cover", "➜ Navigasi", "🎯 Tujuan & Apersepsi", "📖 Materi Inti & Video", "🎮 Kuis Evaluasi"];
+      }
+      if (tLower.includes('tujuan') || tLower.includes('indikator')) {
+        return [`Memahami konsep inti ${topic}`, `Mengidentifikasi komponen penting`, `Mampu menjawab kuis evaluasi`];
+      }
+      if (tLower.includes('apersepsi') || tLower.includes('pengantar')) {
+        return [`Mengamati fenomena sekitar kita`, `Bagaimana hal ini bisa terjadi?`, `Mari kita pelajari bersama!`];
+      }
+      if (tLower.includes('peta') || tLower.includes('perjalanan')) {
+        return ["Titik 1: Konsep Dasar", "Titik 2: Karakteristik", "Titik 3: Analisis", "Titik 4: Evaluasi & Kuis"];
+      }
+      if (tLower.includes('rangkuman') || tLower.includes('summary')) {
+        return [`Intisari utama materi ${topic}`, `Poin-poin penting yang harus diingat`, `Selamat belajar & berlatih!`];
+      }
+      if (tLower.includes('penutup') || tLower.includes('selesai')) {
+        return ["Misi pembelajaran selesai!", "Terima kasih atas partisipasimu", "Sampai jumpa di materi berikutnya!"];
+      }
+      return [`Mempelajari konsep ${title}`, "Memahami relevansi materi", "Eksplorasi visual interaktif"];
+    };
+
     return {
       pageTitle: `Halaman ${index + 1}: ${pageTitle}`,
-      headerText: headerText,
-      cleanPrompt: cleanPrompt,
-      midjourneyPrompt: midjourneyPrompt,
+      headerText: sanitizeHeaderText(headerText),
+      cleanPrompt: sanitizeHeaderText(cleanPrompt),
+      midjourneyPrompt: sanitizeHeaderText(midjourneyPrompt),
       illustrationDesc: structuredSpec,
       canvaKeywords: theme.canvaKeywords,
+      slideContent: getFallbackSlideContent(pageTitle),
       navigationButtons: index === 0 ? "MULAI BELAJAR!" : index === pages.length - 1 ? "SELESAI & ULANGI" : "LANJUT",
       estimatedTime: "1-2 Menit",
       educationalObjective: `Menyajikan konten esensial untuk sub-materi "${pageTitle}" dengan visual clean dan keterbacaan tinggi.`,
@@ -282,11 +340,51 @@ app.post('/api/generate-prompts', async (req: express.Request, res: express.Resp
   }
 
   try {
+    // 1. Analyze custom mascot image with Gemini 3.8 Flash if provided and upload active
+    let analyzedMascotDesc = "";
+    if (mascot?.type === 'custom' && mascot?.image) {
+      const parsedImg = parseDataUrl(mascot.image);
+      if (parsedImg) {
+        try {
+          console.log("Analyzing custom mascot photo with Gemini...");
+          const mascotAnalysisPrompt = `This is a reference photo for a custom educational mascot or teacher character. 
+Describe this character's visual appearance in 1-2 extremely concise sentences in English.
+Focus ONLY on:
+1. What species/type of character it is (e.g. a friendly young female teacher with dark brown hair wearing blue spectacles and a neat beige blazer, or a cute white fluffy rabbit with long ears).
+2. Its primary colors (e.g. orange coat, pastel mint vest).
+3. Distinctive features and facial expression (e.g. big shiny warm eyes, welcoming smile).
+Keep it short so we can use it as a highly consistent character description across all slide visual prompts.`;
+
+          const analysisResponse = await ai.models.generateContent({
+            model: 'gemini-3.8-flash',
+            contents: [
+              {
+                inlineData: {
+                  mimeType: parsedImg.mimeType,
+                  data: parsedImg.base64Data
+                }
+              },
+              {
+                text: mascotAnalysisPrompt
+              }
+            ]
+          });
+          
+          if (analysisResponse.text) {
+            analyzedMascotDesc = analysisResponse.text.trim();
+            console.log("Mascot analysis output:", analyzedMascotDesc);
+          }
+        } catch (e: any) {
+          console.warn("Failed to analyze custom mascot image, using fallback text description:", e?.message || e);
+        }
+      }
+    }
+
     const pageListStr = pages.map((p: string, i: number) => `Halaman ${i + 1}: ${p}`).join('\n');
     const mascotText = mascot?.type === 'none' 
       ? 'Tanpa Maskot (Fokus murni diagram edukatif bersih)' 
-      : mascot?.type === 'custom' && mascot?.imageName
-        ? `Karakter Kustom Berdasarkan Foto Unggahan Guru ("${mascot.imageName}"). Deskripsi: ${mascot.description || 'Karakter pendamping tutor ramah yang konsisten dengan foto referensi'}. Pastikan konsistensi ciri visual karakter di setiap slide tanpa menutupi kartu materi.`
+      : mascot?.type === 'custom'
+        ? `Karakter Kustom Berdasarkan Foto Referensi ("${mascot.imageName || 'karakter_kustom.png'}"). Deskripsi visual karakter dari foto acuan: ${analyzedMascotDesc || mascot.description || 'Karakter tutor pendamping ramah yang tersenyum'}. Pastikan ciri fisik, pakaian, spesies, dan warna karakter ini digambarkan secara konsisten dan identik di setiap slide di posisi tepi/miri tanpa menutupi konten.`
         : `Jenis Maskot: ${mascot?.type || 'tutor'}. Deskripsi: ${mascot?.description || 'Karakter pendamping edukatif yang ramah dan sopan'}.`;
 
     const effectiveDetail = detailLevel || 'clean-minimalis';
@@ -332,14 +430,15 @@ ATURAN VISUAL STYLE & STRICT CLEAN LAYOUT:
    - Warna solid, gradasi lembut, atau backdrop lingkungan minimalis yang tidak berebut perhatian dengan teks.
    - Kontras tinggi dengan panel kartu konten.
 3. Dekorasi:
-   - Dekorasi seminimal mungkin! DILARANG confetti, daun beterbangan, bunga berulang, taburan bintang, kilauan liar (glitter sparkles), garis gerak komik, atau ornamen melayang tanpa makna.
+   - Dekorasi seminimal mungkin! DILARANG confetti, daun beteberan, bunga berulang, taburan bintang, kilauan liar (glitter sparkles), garis gerak komik, atau ornamen melayang tanpa makna.
    - Maksimal 3 ornamen kecil fungsional per slide.
 4. Komposisi & Card Container:
    - Panel kartu konten utama: kontainer kartu putih rounded bersih (clean white rounded modular card container, subtle soft shadow, ample whitespace).
    - Penempatan karakter: di sisi tepi/kiri, berpose ramah menyapa atau menunjuk materi, TIDAK MENUTUPI materi atau kartu konten.
    - Tombol: tombol aksi taktil rounded dengan kontras jelas di bagian bawah.
-5. Progress Tracker & Navigasi Lokasi (Breadcrumbs):
-   - Setiap slide wajib mencantumkan indikator lokasi visual di bagian atas berupa breadcrumb tipis: "[Cover ➔ Navigasi ➔ Materi ➔ Kuis ➔ Selesai]" dengan bagian yang sedang aktif disorot dengan badge kontras, menandakan dengan jelas navigasi saat ini sedang berada di bagian mana.
+
+STRICT HEADER RULE:
+NEVER generate any breadcrumbs, alur/flow indicators, progress chains, or navigation paths (such as '[Cover ➔ Navigasi ➔ Materi ➔ Kuis ➔ Selesai]', 'Cover ➔ Navigasi', or 'Cover -> Navigasi -> ...') in any headerText or slide content. The headerText for each slide must be a clean, simple, and direct title for that specific page (e.g. 'Tujuan Pembelajaran', 'Kuis 1: ...', 'Rangkuman Materi'). Breadcrumbs or flow chains are strictly forbidden on all slides as they clutter the header.
 
 OUTPUT FORMAT UNTUK SETIAP SLIDE:
 1. cleanPrompt: Prompt bahasa Inggris murni yang mengalir alami, siap paste langsung ke Midjourney v6, Canva Magic Media, Imagen 3, atau DALL-E 3.
@@ -348,7 +447,8 @@ OUTPUT FORMAT UNTUK SETIAP SLIDE:
 2. midjourneyPrompt: cleanPrompt + " --ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw"
 3. illustrationDesc: Panduan spesifikasi tata letak manual bahasa Indonesia (Layout, Latar, Kartu Konten, Karakter, Tombol, Palet Warna).
 4. canvaKeywords: 3-5 kata kunci pencarian aset Canva bahasa Inggris relevan.
-5. navigationButtons, estimatedTime, educationalObjective, dan quizData (jika halaman kuis).`;
+5. slideContent: Hasilkan 2-3 butir poin materi singkat dalam Bahasa Indonesia yang sangat relevan untuk sub-topik halaman tersebut, agar guru dapat melihat pratinjau teks yang akan dipasang di slide.
+6. navigationButtons, estimatedTime, educationalObjective, dan quizData (jika halaman kuis).`;
 
     const contents = `Tolong rancang prompt visual ultra-clean edukatif untuk media pembelajaran mata pelajaran "${subject}", materi "${topic}".
 Daftar halaman:
@@ -373,6 +473,11 @@ Harap kembalikan dalam struktur JSON Array valid.`;
               midjourneyPrompt: { type: Type.STRING, description: "Prompt Midjourney lengkap dengan flag parameter" },
               illustrationDesc: { type: Type.STRING, description: "Panduan spesifikasi layout terstruktur bahasa Indonesia" },
               canvaKeywords: { type: Type.STRING, description: "Kata kunci pencarian aset di Canva" },
+              slideContent: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+                description: "2-3 butir poin naskah materi/konten pembelajaran singkat (Bahasa Indonesia) yang akan dicantumkan di panel slide ini"
+              },
               navigationButtons: { type: Type.STRING },
               estimatedTime: { type: Type.STRING },
               educationalObjective: { type: Type.STRING },
@@ -391,7 +496,7 @@ Harap kembalikan dalam struktur JSON Array valid.`;
                 required: ["question", "options", "correctAnswer", "explanation"]
               }
             },
-            required: ["pageTitle", "headerText", "cleanPrompt", "illustrationDesc", "navigationButtons", "estimatedTime", "educationalObjective"]
+            required: ["pageTitle", "headerText", "cleanPrompt", "illustrationDesc", "slideContent", "navigationButtons", "estimatedTime", "educationalObjective"]
           }
         }
       }
@@ -403,7 +508,15 @@ Harap kembalikan dalam struktur JSON Array valid.`;
     }
 
     const parsedPrompts = JSON.parse(textOutput.trim());
-    return res.json({ prompts: parsedPrompts, usedModel: usedModel });
+    const sanitizedPrompts = parsedPrompts.map((p: any) => {
+      return {
+        ...p,
+        headerText: sanitizeHeaderText(p.headerText),
+        cleanPrompt: sanitizeHeaderText(p.cleanPrompt),
+        midjourneyPrompt: sanitizeHeaderText(p.midjourneyPrompt)
+      };
+    });
+    return res.json({ prompts: sanitizedPrompts, usedModel: usedModel });
 
   } catch (err: any) {
     console.warn('Gemini call fell back to server clean generator:', err?.message || err);
@@ -522,6 +635,12 @@ Hasilkan JSON dengan format:
     }
 
     const parsedResult = JSON.parse(textOutput.trim());
+    if (parsedResult.extractedTopic) {
+      parsedResult.extractedTopic = sanitizeHeaderText(parsedResult.extractedTopic);
+    }
+    if (parsedResult.suggestedPages && Array.isArray(parsedResult.suggestedPages)) {
+      parsedResult.suggestedPages = parsedResult.suggestedPages.map((p: string) => sanitizeHeaderText(p));
+    }
     return res.json(parsedResult);
 
   } catch (err: any) {

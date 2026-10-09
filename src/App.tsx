@@ -48,18 +48,20 @@ import {
 
 export const STANDARD_13_PAGES = [
   "1. Cover",
-  "2. Navigasi (Tujuan Pembelajaran, Kuis)",
+  "2. Navigasi (Tujuan, Apersepsi, Peta, Materi, Video, Kuis)",
   "3. Tujuan Pembelajaran",
   "4. Apersepsi",
-  "5. Peta Perjalanan Kuis (4 titik kuis)",
-  "6. Kuis 1: Siapa yang membantu penyerbukan bunga?",
-  "7. Kuis 2: Di mana ikan hidup?",
-  "8. Kuis 3: Siapa konsumen tingkat pertama pada rantai makanan?",
-  "9. Kuis 4: Cahaya matahari termasuk komponen biotik?",
-  "10. Respon Benar",
-  "11. Respon Salah",
-  "12. Rangkuman/Summary",
-  "13. Penutup"
+  "5. Peta Pembelajaran",
+  "6. Materi Inti",
+  "7. Video Pembelajaran",
+  "8. Kuis 1: Siapa yang membantu penyerbukan bunga?",
+  "9. Kuis 2: Di mana ikan hidup?",
+  "10. Kuis 3: Siapa konsumen tingkat pertama pada rantai makanan?",
+  "11. Kuis 4: Cahaya matahari termasuk komponen biotik?",
+  "12. Respon Benar",
+  "13. Respon Salah",
+  "14. Rangkuman/Summary",
+  "15. Penutup"
 ];
 
 export const SUBJECT_OPTIONS = [
@@ -373,6 +375,7 @@ interface GeneratedPrompt {
   midjourneyPrompt: string;
   illustrationDesc: string;
   canvaKeywords?: string;
+  slideContent?: string[];
   navigationButtons: string;
   estimatedTime: string;
   educationalObjective: string;
@@ -1095,6 +1098,34 @@ export default function App() {
     };
   };
 
+  // Helper to strip any breadcrumb or navigation progress indicator chain (e.g. Cover ➔ Navigasi ...)
+  const sanitizeHeaderText = (text: string): string => {
+    if (!text) return "";
+    let cleaned = text;
+    
+    const breadcrumbRegexes = [
+      /\[?Cover\s*(➔|->|→|=>|>|•|&bull;)\s*Navigasi\s*(➔|->|→|=>|>|•|&bull;)\s*Materi\s*(➔|->|→|=>|>|•|&bull;)\s*Kuis\s*(➔|->|→|=>|>|•|&bull;)\s*Selesai\]?/gi,
+      /\[?Cover\s*(➔|->|→|=>|>|•|&bull;)\s*Navigasi\s*(➔|->|→|=>|>|•|&bull;)\s*Tujuan\s*(➔|->|→|=>|>|•|&bull;)\s*Kuis\s*(➔|->|→|=>|>|•|&bull;)\s*Selesai\]?/gi,
+      /\[?Cover\s*(➔|->|→|=>|>|•|&bull;)\s*Navigasi\s*(➔|->|→|=>|>|•|&bull;)\s*Apersepsi\s*(➔|->|→|=>|>|•|&bull;)\s*Materi\s*(➔|->|→|=>|>|•|&bull;)\s*Video\s*(➔|->|→|=>|>|•|&bull;)\s*Kuis\s*(➔|->|→|=>|>|•|&bull;)\s*Selesai\]?/gi,
+      /\[?Cover\s*(➔|->|→|=>|>|•|&bull;)\s*Navigasi\s*(➔|->|→|=>|>|•|&bull;)\s*Tujuan\s*(➔|->|→|=>|>|•|&bull;)\s*Apersepsi\s*(➔|->|→|=>|>|•|&bull;)\s*Peta\s*(➔|->|→|=>|>|•|&bull;)\s*Kuis\s*(➔|->|→|=>|>|•|&bull;)\s*Selesai\]?/gi,
+      /Cover\s*➔\s*Navigasi\s*➔\s*Materi\s*➔\s*Kuis\s*➔\s*Selesai/gi,
+      /Cover\s*➔\s*Navigasi\s*➔\s*Tujuan\s*➔\s*Kuis\s*➔\s*Selesai/gi,
+      /Cover\s*➔\s*Navigasi\s*➔\s*Apersepsi\s*➔\s*Materi\s*➔\s*Video\s*➔\s*Kuis\s*➔\s*Selesai/gi,
+      /\[?Cover\s*(➔|->|→|=>|>)\s*Navigasi\s*(➔|->|→|=>|>)\s*Materi\s*(➔|->|→|=>|>)\s*Kuis\s*(➔|->|→|=>|>)\s*Selesai\]?/gi
+    ];
+
+    for (const regex of breadcrumbRegexes) {
+      cleaned = cleaned.replace(regex, "");
+    }
+
+    // Remove loose arrows or brackets
+    cleaned = cleaned.replace(/^\s*(➔|->|→|=>|>)\s*/, "");
+    cleaned = cleaned.replace(/\s*(➔|->|→|=>|>)\s*$/, "");
+    cleaned = cleaned.replace(/\[\s*\]/g, "");
+    
+    return cleaned.trim();
+  };
+
   // Helper to generate an ultra-clean prompt strictly complying with Master Prompt
   const generateCleanPromptForPage = (pageTitle: string, index: number) => {
     const aspect = layout === 'portrait' ? '9:16 vertical portrait' : '16:9 landscape';
@@ -1160,16 +1191,7 @@ export default function App() {
       slideSpecific = `Right side features a large clean white rounded card container with generous whitespace displaying key concepts of "${pageTitle}". Left side has ${characterClause}. Background features ${theme.bg}`;
     }
 
-    // Determine active progress tracker label based on slide type (navigasi lokasi)
-    let trackerLabel = "Materi";
-    if (titleLower.includes('cover') || titleLower.includes('sampul')) trackerLabel = "Cover";
-    else if (titleLower.includes('navigasi') || titleLower.includes('menu')) trackerLabel = "Menu";
-    else if (titleLower.includes('kuis') || titleLower.includes('benar') || titleLower.includes('salah')) trackerLabel = "Kuis";
-    else if (titleLower.includes('penutup') || titleLower.includes('selesai') || titleLower.includes('rangkuman')) trackerLabel = "Selesai";
-
-    const progressTrackerClause = `Top edge of the slide features a subtle progress bar breadcrumb tracker: [Cover ➔ Navigasi ➔ Materi ➔ Kuis ➔ Selesai], with the active section "${trackerLabel}" beautifully highlighted in a clean colored rounded badge pill`;
-
-    return `Clean educational presentation slide UI, ${aspect} aspect ratio. ${styleClause}. ${progressTrackerClause}. ${characterClause}. ${slideSpecific}. ${detailClause}. Soft ambient studio lighting, sharp focus, 8k resolution, UI/UX educational presentation mockup.`;
+    return `Clean educational presentation slide UI, ${aspect} aspect ratio. ${styleClause}. ${characterClause}. ${slideSpecific}. ${detailClause}. Soft ambient studio lighting, sharp focus, 8k resolution, UI/UX educational presentation mockup.`;
   };
 
   // Local fallback generator (strictly obeying Master Prompt rules)
@@ -1245,13 +1267,40 @@ export default function App() {
 🎨 Palet Warna: ${theme.palette}
 🔍 Kata Kunci Canva: ${theme.canvaKeywords}`;
 
+      const getFallbackSlideContent = (title: string) => {
+        const tLower = title.toLowerCase();
+        if (tLower.includes('cover') || tLower.includes('sampul')) {
+          return [`Mata Pelajaran: ${subject}`, `Topik: ${topic}`, `Target: ${ageGroup}`];
+        }
+        if (tLower.includes('navigasi') || tLower.includes('menu')) {
+          return ["✓ Cover", "➜ Navigasi", "🎯 Tujuan & Apersepsi", "📖 Materi Inti & Video", "🎮 Kuis Evaluasi"];
+        }
+        if (tLower.includes('tujuan') || tLower.includes('indikator')) {
+          return [`Memahami konsep inti ${topic}`, `Mengidentifikasi komponen penting`, `Mampu menjawab kuis evaluasi`];
+        }
+        if (tLower.includes('apersepsi') || tLower.includes('pengantar')) {
+          return [`Mengamati fenomena sekitar kita`, `Bagaimana hal ini bisa terjadi?`, `Mari kita pelajari bersama!`];
+        }
+        if (tLower.includes('peta') || tLower.includes('perjalanan')) {
+          return ["Titik 1: Konsep Dasar", "Titik 2: Karakteristik", "Titik 3: Analisis", "Titik 4: Evaluasi & Kuis"];
+        }
+        if (tLower.includes('rangkuman') || tLower.includes('summary')) {
+          return [`Intisari utama materi ${topic}`, `Poin-poin penting yang harus diingat`, `Selamat belajar & berlatih!`];
+        }
+        if (tLower.includes('penutup') || tLower.includes('selesai')) {
+          return ["Misi pembelajaran selesai!", "Terima kasih atas partisipasimu", "Sampai jumpa di materi berikutnya!"];
+        }
+        return [`Mempelajari konsep ${title}`, "Memahami relevansi materi", "Eksplorasi visual interaktif"];
+      };
+
       return {
         pageTitle: `Halaman ${index + 1}: ${pageTitle}`,
-        headerText: headerText,
-        cleanPrompt: cleanPrompt,
-        midjourneyPrompt: midjourneyPrompt,
+        headerText: sanitizeHeaderText(headerText),
+        cleanPrompt: sanitizeHeaderText(cleanPrompt),
+        midjourneyPrompt: sanitizeHeaderText(midjourneyPrompt),
         illustrationDesc: structuredSpec,
         canvaKeywords: theme.canvaKeywords,
+        slideContent: getFallbackSlideContent(pageTitle),
         navigationButtons: index === 0 ? "MULAI BELAJAR!" : index === pages.length - 1 ? "SELESAI & ULANGI" : "LANJUT",
         estimatedTime: "1-2 Menit",
         educationalObjective: `Memberikan stimulus visual yang terstruktur dan bersih untuk sub-materi "${pageTitle}" sehingga mempercepat pemahaman kognitif siswa.`,
@@ -1280,7 +1329,8 @@ export default function App() {
         type: mascotType,
         description: mascotType === 'custom' ? customMascot : '',
         imageName: mascotType === 'custom' ? mascotImageName : null,
-        hasImage: !!mascotImage
+        hasImage: !!mascotImage,
+        image: mascotType === 'custom' ? mascotImage : null
       }
     };
 
@@ -1316,12 +1366,42 @@ export default function App() {
         const selectedStyleObj = VISUAL_STYLES.find(s => s.id === visualStyle) || VISUAL_STYLES[0];
         const enrichedPrompts = data.prompts.map((p: any, idx: number) => {
           const fallbackClean = generateCleanPromptForPage(pages[idx] || p.pageTitle, idx);
-          const clean = p.cleanPrompt || fallbackClean;
+          const clean = sanitizeHeaderText(p.cleanPrompt || fallbackClean);
+          
+          // Fallback slideContent if missing
+          const getFallbackContent = (title: string) => {
+            const tLower = title.toLowerCase();
+            if (tLower.includes('cover') || tLower.includes('sampul')) {
+              return [`Mata Pelajaran: ${subject}`, `Topik: ${topic}`, `Target: ${ageGroup}`];
+            }
+            if (tLower.includes('navigasi') || tLower.includes('menu')) {
+              return ["✓ Cover", "➜ Navigasi", "🎯 Tujuan & Apersepsi", "📖 Materi Inti & Video", "🎮 Kuis Evaluasi"];
+            }
+            if (tLower.includes('tujuan') || tLower.includes('indikator')) {
+              return [`Memahami konsep inti ${topic}`, `Mengidentifikasi komponen penting`, `Mampu menjawab kuis evaluasi`];
+            }
+            if (tLower.includes('apersepsi') || tLower.includes('pengantar')) {
+              return [`Mengamati fenomena sekitar kita`, `Bagaimana hal ini bisa terjadi?`, `Mari kita pelajari bersama!`];
+            }
+            if (tLower.includes('peta') || tLower.includes('perjalanan')) {
+              return ["Titik 1: Konsep Dasar", "Titik 2: Karakteristik", "Titik 3: Analisis", "Titik 4: Evaluasi & Kuis"];
+            }
+            if (tLower.includes('rangkuman') || tLower.includes('summary')) {
+              return [`Intisari utama materi ${topic}`, `Poin-poin penting yang harus diingat`, `Selamat belajar & berlatih!`];
+            }
+            if (tLower.includes('penutup') || tLower.includes('selesai')) {
+              return ["Misi pembelajaran selesai!", "Terima kasih atas partisipasimu", "Sampai jumpa di materi berikutnya!"];
+            }
+            return [`Mempelajari konsep ${title}`, "Memahami relevansi materi", "Eksplorasi visual interaktif"];
+          };
+
           return {
             ...p,
+            headerText: sanitizeHeaderText(p.headerText || pages[idx] || p.pageTitle),
             cleanPrompt: clean,
-            midjourneyPrompt: p.midjourneyPrompt || `${clean} --ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw`,
-            canvaKeywords: p.canvaKeywords || selectedStyleObj.canvaKeywords
+            midjourneyPrompt: sanitizeHeaderText(p.midjourneyPrompt || `${clean} --ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw`),
+            canvaKeywords: p.canvaKeywords || selectedStyleObj.canvaKeywords,
+            slideContent: p.slideContent || getFallbackContent(pages[idx] || p.pageTitle)
           };
         });
         setResults(enrichedPrompts);
@@ -2896,48 +2976,14 @@ export default function App() {
                             <span className="w-7 h-2.5 bg-white rounded-full -mt-0.5"></span>
                           </div>
 
-                          {/* Slide Top Bar & Breadcrumb Progress Tracker (Menandai lokasi navigasi aktif) */}
-                          <div className="flex flex-col gap-1 z-10 border-b border-neutral-100/30 pb-1.5">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[8px] font-bold text-forest-900 bg-white/90 backdrop-blur-xs px-2 py-0.5 rounded-full shadow-3xs font-mono">
-                                Slide {index + 1} dari {results.length}
-                              </span>
-                              <span className="text-[8px] font-bold text-coral-600 bg-coral-50/95 px-2 py-0.5 rounded-full border border-coral-200/50 font-mono">
-                                {visualStyle.split('/')[0].trim()}
-                              </span>
-                            </div>
-                            
-                            {/* Visual Breadcrumb Progress Indicator */}
-                            <div className="flex items-center justify-between text-[6px] font-extrabold font-sans text-neutral-500/80 mt-0.5 bg-white/40 py-0.5 px-2 rounded-md">
-                              {[
-                                { key: 'Cover', label: 'Cover' },
-                                { key: 'Menu', label: 'Navigasi' },
-                                { key: 'Materi', label: 'Materi' },
-                                { key: 'Kuis', label: 'Kuis' },
-                                { key: 'Selesai', label: 'Selesai' }
-                              ].map(section => {
-                                const isCurrent = (
-                                  (section.key === 'Cover' && (titleLower.includes('cover') || titleLower.includes('sampul'))) ||
-                                  (section.key === 'Menu' && (titleLower.includes('navigasi') || titleLower.includes('menu'))) ||
-                                  (section.key === 'Kuis' && (titleLower.includes('kuis') || titleLower.includes('benar') || titleLower.includes('salah'))) ||
-                                  (section.key === 'Selesai' && (titleLower.includes('penutup') || titleLower.includes('selesai') || titleLower.includes('rangkuman') || titleLower.includes('summary'))) ||
-                                  (section.key === 'Materi' && !(titleLower.includes('cover') || titleLower.includes('sampul') || titleLower.includes('navigasi') || titleLower.includes('menu') || titleLower.includes('kuis') || titleLower.includes('benar') || titleLower.includes('salah') || titleLower.includes('penutup') || titleLower.includes('selesai') || titleLower.includes('rangkuman') || titleLower.includes('summary')))
-                                );
-                                return (
-                                  <span 
-                                    key={section.key} 
-                                    className={`px-1 rounded-sm transition-all flex items-center gap-0.5 ${
-                                      isCurrent 
-                                        ? 'text-forest-900 bg-emerald-100/90 font-extrabold border border-emerald-200/50 shadow-3xs scale-105' 
-                                        : 'text-neutral-400'
-                                    }`}
-                                  >
-                                    {isCurrent && <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>}
-                                    {section.label}
-                                  </span>
-                                );
-                              })}
-                            </div>
+                          {/* Slide Top Bar */}
+                          <div className="flex items-center justify-between z-10">
+                            <span className="text-[9px] font-bold text-forest-900 bg-white/80 backdrop-blur-xs px-2 py-0.5 rounded-full shadow-2xs font-mono">
+                              Slide {index + 1} dari {results.length}
+                            </span>
+                            <span className="text-[9px] font-bold text-coral-600 bg-coral-50/90 px-2 py-0.5 rounded-full border border-coral-200/60 font-mono">
+                              {visualStyle.split('/')[0].trim()}
+                            </span>
                           </div>
 
                           {/* Central Content Area: Split layout with Mascot on Left and Clean Rounded Card on Right */}
@@ -2983,24 +3029,33 @@ export default function App() {
                               {/* Card Body depending on slide type */}
                               <div className="my-1.5">
                                 {prompt.pageTitle.toLowerCase().includes('navigasi') ? (
-                                  <div className="grid grid-cols-2 gap-1 w-full text-[6px] font-sans">
-                                    <div className="py-0.5 px-1 bg-forest-900 text-white rounded-md font-extrabold flex items-center gap-0.5 border border-forest-800 shadow-3xs">
+                                  <div className="grid grid-cols-3 gap-1 w-full text-[5.5px] font-sans">
+                                    <div className="py-0.5 px-1 bg-emerald-50 text-emerald-800 rounded-sm font-medium flex items-center gap-0.5 border border-emerald-100">
+                                      <span>✓</span> Cover
+                                    </div>
+                                    <div className="py-0.5 px-1 bg-forest-900 text-white rounded-sm font-bold flex items-center gap-0.5 border border-forest-800 shadow-3xs">
+                                      <span>➜</span> Navigasi
+                                    </div>
+                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-sm font-medium flex items-center gap-0.5 border border-neutral-200">
                                       <span>🎯</span> Tujuan
                                     </div>
-                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-md font-medium flex items-center gap-0.5 border border-neutral-200">
+                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-sm font-medium flex items-center gap-0.5 border border-neutral-200">
                                       <span>💡</span> Apersepsi
                                     </div>
-                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-md font-medium flex items-center gap-0.5 border border-neutral-200">
+                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-sm font-medium flex items-center gap-0.5 border border-neutral-200">
                                       <span>🗺️</span> Peta
                                     </div>
-                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-md font-medium flex items-center gap-0.5 border border-neutral-200">
+                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-sm font-medium flex items-center gap-0.5 border border-neutral-200">
                                       <span>📖</span> Materi
                                     </div>
-                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-md font-medium flex items-center gap-0.5 border border-neutral-200">
+                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-sm font-medium flex items-center gap-0.5 border border-neutral-200">
                                       <span>🎬</span> Video
                                     </div>
-                                    <div className="py-0.5 px-1 bg-coral-600 text-white rounded-md font-bold flex items-center gap-0.5 shadow-2xs">
+                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-sm font-medium flex items-center gap-0.5 border border-neutral-200">
                                       <span>🎮</span> Kuis
+                                    </div>
+                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-sm font-medium flex items-center gap-0.5 border border-neutral-200">
+                                      <span>🎓</span> Selesai
                                     </div>
                                   </div>
                                 ) : prompt.pageTitle.toLowerCase().includes('peta') ? (
@@ -3037,10 +3092,13 @@ export default function App() {
                                     </div>
                                   </div>
                                 ) : (
-                                  <div className="flex flex-col gap-0.5">
-                                    <div className="h-1.5 bg-neutral-100 rounded-full w-4/5"></div>
-                                    <div className="h-1.5 bg-neutral-100 rounded-full w-2/3"></div>
-                                    <div className="h-1.5 bg-neutral-100 rounded-full w-1/2"></div>
+                                  <div className="flex flex-col gap-1 text-[7px] text-neutral-700 leading-tight">
+                                    {(prompt.slideContent && Array.isArray(prompt.slideContent) ? prompt.slideContent : []).map((bullet: string, bIdx: number) => (
+                                      <div key={bIdx} className="flex items-start gap-1">
+                                        <span className="text-forest-700 font-bold shrink-0">•</span>
+                                        <span className="line-clamp-2 text-[6.5px] leading-tight text-neutral-800">{bullet}</span>
+                                      </div>
+                                    ))}
                                   </div>
                                 )}
                               </div>
