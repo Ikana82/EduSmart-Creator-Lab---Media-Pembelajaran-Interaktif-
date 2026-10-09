@@ -48,10 +48,10 @@ import {
 
 export const STANDARD_13_PAGES = [
   "1. Cover",
-  "2. Navigasi (Tujuan, Apersepsi, Peta, Materi, Video, Kuis)",
-  "3. Tujuan Pembelajaran",
+  "2. Navigasi (Petunjuk, Apersepsi, Peta Konsep, Materi, Video, Kuis)",
+  "3. Petunjuk",
   "4. Apersepsi",
-  "5. Peta Pembelajaran",
+  "5. Peta Konsep",
   "6. Materi Inti",
   "7. Video Pembelajaran",
   "8. Kuis 1: Siapa yang membantu penyerbukan bunga?",
@@ -60,8 +60,7 @@ export const STANDARD_13_PAGES = [
   "11. Kuis 4: Cahaya matahari termasuk komponen biotik?",
   "12. Respon Benar",
   "13. Respon Salah",
-  "14. Rangkuman/Summary",
-  "15. Penutup"
+  "14. Rangkuman & Penutup"
 ];
 
 export const SUBJECT_OPTIONS = [
@@ -94,18 +93,19 @@ const PRESET_TOPICS = [
     objective: "Memahami pecahan 1/2, 1/4 melalui potongan visual dan mengenali bangun geometri datar.",
     pages: [
       "1. Cover",
-      "2. Navigasi (Tujuan Pembelajaran, Kuis)",
-      "3. Tujuan Pembelajaran",
+      "2. Navigasi (Petunjuk, Apersepsi, Peta Konsep, Materi, Video, Kuis)",
+      "3. Petunjuk",
       "4. Apersepsi",
-      "5. Peta Perjalanan Kuis (4 titik kuis)",
-      "6. Kuis 1: Berapa bagian pizza yang diwarnai?",
-      "7. Kuis 2: Bangun datar dengan 4 sisi sama panjang?",
-      "8. Kuis 3: Nilai pecahan 2/4 sama besar dengan apa?",
-      "9. Kuis 4: Benda di kelas berbentuk lingkaran?",
-      "10. Respon Benar",
-      "11. Respon Salah",
-      "12. Rangkuman/Summary",
-      "13. Penutup"
+      "5. Peta Konsep",
+      "6. Materi Inti",
+      "7. Video Pembelajaran",
+      "8. Kuis 1: Berapa bagian pizza yang diwarnai?",
+      "9. Kuis 2: Bangun datar dengan 4 sisi sama panjang?",
+      "10. Kuis 3: Nilai pecahan 2/4 sama besar dengan apa?",
+      "11. Kuis 4: Benda di kelas berbentuk lingkaran?",
+      "12. Respon Benar",
+      "13. Respon Salah",
+      "14. Rangkuman & Penutup"
     ] 
   },
   { 
@@ -115,18 +115,19 @@ const PRESET_TOPICS = [
     objective: "Menemukan ide pokok dalam kutipan fabel dan meneladani pesan moralnya.",
     pages: [
       "1. Cover",
-      "2. Navigasi (Tujuan Pembelajaran, Kuis)",
-      "3. Tujuan Pembelajaran",
+      "2. Navigasi (Petunjuk, Apersepsi, Peta Konsep, Materi, Video, Kuis)",
+      "3. Petunjuk",
       "4. Apersepsi",
-      "5. Peta Perjalanan Kuis (4 titik kuis)",
-      "6. Kuis 1: Di mana latar tempat terjadinya cerita?",
-      "7. Kuis 2: Siapa tokoh utama fabel tersebut?",
-      "8. Kuis 3: Apa watak kancil dalam cerita?",
-      "9. Kuis 4: Apa amanat moral yang bisa kita ambil?",
-      "10. Respon Benar",
-      "11. Respon Salah",
-      "12. Rangkuman/Summary",
-      "13. Penutup"
+      "5. Peta Konsep",
+      "6. Materi Inti",
+      "7. Video Pembelajaran",
+      "8. Kuis 1: Di mana latar tempat terjadinya cerita?",
+      "9. Kuis 2: Siapa tokoh utama fabel tersebut?",
+      "10. Kuis 3: Apa watak kancil dalam cerita?",
+      "11. Kuis 4: Apa amanat moral yang bisa kita ambil?",
+      "12. Respon Benar",
+      "13. Respon Salah",
+      "14. Rangkuman & Penutup"
     ] 
   },
   { 
@@ -136,18 +137,19 @@ const PRESET_TOPICS = [
     objective: "Menganalisis susunan tata surya dan karakteristik fisik planet-planet pengitari matahari.",
     pages: [
       "1. Cover",
-      "2. Navigasi (Tujuan Pembelajaran, Kuis)",
-      "3. Tujuan Pembelajaran",
+      "2. Navigasi (Petunjuk, Apersepsi, Peta Konsep, Materi, Video, Kuis)",
+      "3. Petunjuk",
       "4. Apersepsi",
-      "5. Peta Perjalanan Kuis (4 titik kuis)",
-      "6. Kuis 1: Pusat gravitasi tata surya kita?",
-      "7. Kuis 2: Planet terbesar dengan bintik merah raksasa?",
-      "8. Kuis 3: Mengapa Mars berwarna kemerahan?",
-      "9. Kuis 4: Planet dengan sistem cincin es terindah?",
-      "10. Respon Benar",
-      "11. Respon Salah",
-      "12. Rangkuman/Summary",
-      "13. Penutup"
+      "5. Peta Konsep",
+      "6. Materi Inti",
+      "7. Video Pembelajaran",
+      "8. Kuis 1: Pusat gravitasi tata surya kita?",
+      "9. Kuis 2: Planet terbesar dengan bintik merah raksasa?",
+      "10. Kuis 3: Mengapa Mars berwarna kemerahan?",
+      "11. Kuis 4: Planet dengan sistem cincin es terindah?",
+      "12. Respon Benar",
+      "13. Respon Salah",
+      "14. Rangkuman & Penutup"
     ] 
   },
   { 
@@ -157,18 +159,19 @@ const PRESET_TOPICS = [
     objective: "Mengenal rumah adat, pakaian tradisional, dan semboyan pemersatu bangsa.",
     pages: [
       "1. Cover",
-      "2. Navigasi (Tujuan Pembelajaran, Kuis)",
-      "3. Tujuan Pembelajaran",
+      "2. Navigasi (Petunjuk, Apersepsi, Peta Konsep, Materi, Video, Kuis)",
+      "3. Petunjuk",
       "4. Apersepsi",
-      "5. Peta Perjalanan Kuis (4 titik kuis)",
-      "6. Kuis 1: Rumah adat Tongkonan dari daerah mana?",
-      "7. Kuis 2: Alat musik tradisional Sasando dari mana?",
-      "8. Kuis 3: Arti semboyan Bhinneka Tunggal Ika?",
-      "9. Kuis 4: Kain tenun Ulos adalah ciri khas suku apa?",
-      "10. Respon Benar",
-      "11. Respon Salah",
-      "12. Rangkuman/Summary",
-      "13. Penutup"
+      "5. Peta Konsep",
+      "6. Materi Inti",
+      "7. Video Pembelajaran",
+      "8. Kuis 1: Rumah adat Tongkonan dari daerah mana?",
+      "9. Kuis 2: Alat musik tradisional Sasando dari mana?",
+      "10. Kuis 3: Arti semboyan Bhinneka Tunggal Ika?",
+      "11. Kuis 4: Kain tenun Ulos adalah ciri khas suku apa?",
+      "12. Respon Benar",
+      "13. Respon Salah",
+      "14. Rangkuman & Penutup"
     ] 
   },
   { 
@@ -178,18 +181,19 @@ const PRESET_TOPICS = [
     objective: "Mengenali rupa hewan peliharaan, suara khasnya, dan makanannya secara ceria.",
     pages: [
       "1. Cover",
-      "2. Navigasi (Tujuan Pembelajaran, Kuis)",
-      "3. Tujuan Pembelajaran",
+      "2. Navigasi (Petunjuk, Apersepsi, Peta Konsep, Materi, Video, Kuis)",
+      "3. Petunjuk",
       "4. Apersepsi",
-      "5. Peta Perjalanan Kuis (4 titik kuis)",
-      "6. Kuis 1: Hewan lucu berbulu yang bersuara 'meong'?",
-      "7. Kuis 2: Siapa yang suka wortel dan melompat lincah?",
-      "8. Kuis 3: Hewan bertubuh besar dengan belalai panjang?",
-      "9. Kuis 4: Burung berleher panjang yang suka berenang?",
-      "10. Respon Benar",
-      "11. Respon Salah",
-      "12. Rangkuman/Summary",
-      "13. Penutup"
+      "5. Peta Konsep",
+      "6. Materi Inti",
+      "7. Video Pembelajaran",
+      "8. Kuis 1: Hewan lucu berbulu yang bersuara 'meong'?",
+      "9. Kuis 2: Siapa yang suka wortel dan melompat lincah?",
+      "10. Kuis 3: Hewan bertubuh besar dengan belalai panjang?",
+      "11. Kuis 4: Burung berleher panjang yang suka berenang?",
+      "12. Respon Benar",
+      "13. Respon Salah",
+      "14. Rangkuman & Penutup"
     ] 
   }
 ];
@@ -1273,7 +1277,7 @@ export default function App() {
           return [`Mata Pelajaran: ${subject}`, `Topik: ${topic}`, `Target: ${ageGroup}`];
         }
         if (tLower.includes('navigasi') || tLower.includes('menu')) {
-          return ["✓ Cover", "➜ Navigasi", "🎯 Tujuan & Apersepsi", "📖 Materi Inti & Video", "🎮 Kuis Evaluasi"];
+          return ["📋 Petunjuk", "💡 Apersepsi", "🗺️ Peta / Mapping", "📖 Materi", "🎬 Video", "🎮 Kuis"];
         }
         if (tLower.includes('tujuan') || tLower.includes('indikator')) {
           return [`Memahami konsep inti ${topic}`, `Mengidentifikasi komponen penting`, `Mampu menjawab kuis evaluasi`];
@@ -1375,7 +1379,7 @@ export default function App() {
               return [`Mata Pelajaran: ${subject}`, `Topik: ${topic}`, `Target: ${ageGroup}`];
             }
             if (tLower.includes('navigasi') || tLower.includes('menu')) {
-              return ["✓ Cover", "➜ Navigasi", "🎯 Tujuan & Apersepsi", "📖 Materi Inti & Video", "🎮 Kuis Evaluasi"];
+              return ["📋 Petunjuk", "💡 Apersepsi", "🗺️ Peta / Mapping", "📖 Materi", "🎬 Video", "🎮 Kuis"];
             }
             if (tLower.includes('tujuan') || tLower.includes('indikator')) {
               return [`Memahami konsep inti ${topic}`, `Mengidentifikasi komponen penting`, `Mampu menjawab kuis evaluasi`];
@@ -1400,6 +1404,7 @@ export default function App() {
             headerText: sanitizeHeaderText(p.headerText || pages[idx] || p.pageTitle),
             cleanPrompt: clean,
             midjourneyPrompt: sanitizeHeaderText(p.midjourneyPrompt || `${clean} --ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw`),
+            illustrationDesc: sanitizeHeaderText(p.illustrationDesc || ''),
             canvaKeywords: p.canvaKeywords || selectedStyleObj.canvaKeywords,
             slideContent: p.slideContent || getFallbackContent(pages[idx] || p.pageTitle)
           };
@@ -2105,7 +2110,7 @@ export default function App() {
                   <div className="p-3 bg-amber-50/70 border border-amber-200/60 rounded-xl text-xs text-amber-950 flex items-start gap-2.5">
                     <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
                     <div className="leading-relaxed text-[11px]">
-                      <strong>Standar Alur 13 Halaman EduSmart Lab:</strong> 1. Cover &bull; 2. Navigasi &bull; 3. Tujuan &bull; 4. Apersepsi &bull; 5. Peta 4 Kuis &bull; 6-9. Kuis 1 s/d 4 (4 Soal Interaktif) &bull; 10. Respon Benar &bull; 11. Respon Salah &bull; 12. Rangkuman &bull; 13. Penutup.
+                      <strong>Standar Alur EduSmart Lab:</strong> 1. Cover &bull; 2. Navigasi &bull; 3. Petunjuk &bull; 4. Apersepsi &bull; 5. Peta Konsep &bull; 6. Materi Inti &bull; 7. Video Pembelajaran &bull; 8-11. Kuis 1 s/d 4 &bull; 12. Respon Benar &bull; 13. Respon Salah &bull; 14. Rangkuman & Penutup.
                     </div>
                   </div>
 
@@ -3029,33 +3034,24 @@ export default function App() {
                               {/* Card Body depending on slide type */}
                               <div className="my-1.5">
                                 {prompt.pageTitle.toLowerCase().includes('navigasi') ? (
-                                  <div className="grid grid-cols-3 gap-1 w-full text-[5.5px] font-sans">
-                                    <div className="py-0.5 px-1 bg-emerald-50 text-emerald-800 rounded-sm font-medium flex items-center gap-0.5 border border-emerald-100">
-                                      <span>✓</span> Cover
+                                  <div className="grid grid-cols-2 gap-1 w-full text-[6px] font-sans">
+                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-md font-semibold flex items-center gap-0.5 border border-neutral-200">
+                                      <span>📋</span> Petunjuk
                                     </div>
-                                    <div className="py-0.5 px-1 bg-forest-900 text-white rounded-sm font-bold flex items-center gap-0.5 border border-forest-800 shadow-3xs">
-                                      <span>➜</span> Navigasi
-                                    </div>
-                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-sm font-medium flex items-center gap-0.5 border border-neutral-200">
-                                      <span>🎯</span> Tujuan
-                                    </div>
-                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-sm font-medium flex items-center gap-0.5 border border-neutral-200">
+                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-md font-semibold flex items-center gap-0.5 border border-neutral-200">
                                       <span>💡</span> Apersepsi
                                     </div>
-                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-sm font-medium flex items-center gap-0.5 border border-neutral-200">
-                                      <span>🗺️</span> Peta
+                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-md font-semibold flex items-center gap-0.5 border border-neutral-200">
+                                      <span>🗺️</span> Peta / Mapping
                                     </div>
-                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-sm font-medium flex items-center gap-0.5 border border-neutral-200">
+                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-md font-semibold flex items-center gap-0.5 border border-neutral-200">
                                       <span>📖</span> Materi
                                     </div>
-                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-sm font-medium flex items-center gap-0.5 border border-neutral-200">
+                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-md font-semibold flex items-center gap-0.5 border border-neutral-200">
                                       <span>🎬</span> Video
                                     </div>
-                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-sm font-medium flex items-center gap-0.5 border border-neutral-200">
+                                    <div className="py-0.5 px-1 bg-coral-600 text-white rounded-md font-bold flex items-center gap-0.5 shadow-2xs">
                                       <span>🎮</span> Kuis
-                                    </div>
-                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-sm font-medium flex items-center gap-0.5 border border-neutral-200">
-                                      <span>🎓</span> Selesai
                                     </div>
                                   </div>
                                 ) : prompt.pageTitle.toLowerCase().includes('peta') ? (

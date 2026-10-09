@@ -202,7 +202,7 @@ function generateServerFallbackPrompts(payload: any) {
       slideSpecific = `Center displays a clean, prominent title banner reading "${topic}" with subtitle "${subject} - ${ageGroup}". Background features ${theme.bg}. Bottom center has a clean, tactile rounded action button "MULAI BELAJAR". Content-first layout with balanced margins.`;
     } else if (titleLower.includes('navigasi') || titleLower.includes('menu')) {
       headerText = "Pilih Menu Belajar";
-      slideSpecific = `Main menu navigation board. Displays six neat, modular white rounded card buttons organized in a balanced grid layout with clean matching icons: "1. Tujuan Pembelajaran" (icon: target), "2. Apersepsi" (icon: lightbulb), "3. Peta Pembelajaran" (icon: map), "4. Materi Inti" (icon: book), "5. Video Pembelajaran" (icon: play), and "6. Kuis Interaktif" (icon: game controller). Outstanding spacious layout, high contrast readability, clean typography. Highlighting 'Menu Navigasi' as the current active step in this lesson journey. Background features ${theme.bg}.`;
+      slideSpecific = `Main menu navigation board. Displays six neat, modular white rounded card buttons organized in a balanced grid layout with clean matching icons: "1. Petunjuk" (icon: info/guide), "2. Apersepsi" (icon: lightbulb), "3. Peta / Mapping" (icon: map), "4. Materi" (icon: book), "5. Video" (icon: play), and "6. Kuis" (icon: game controller). Outstanding spacious layout, high contrast readability, clean typography. Highlighting 'Menu Navigasi' as the current active step in this lesson journey. Background features ${theme.bg}.`;
     } else if (titleLower.includes('tujuan') || titleLower.includes('indikator')) {
       headerText = "Tujuan Pembelajaran";
       slideSpecific = `Right side features a large clean white rounded card container with 3 neatly organized checklist items explaining learning goals for "${topic}". Ample negative space, high contrast typography. Background features ${theme.bg}.`;
@@ -284,7 +284,7 @@ function generateServerFallbackPrompts(payload: any) {
         return [`Mata Pelajaran: ${subject}`, `Topik: ${topic}`, `Target: ${ageGroup}`];
       }
       if (tLower.includes('navigasi') || tLower.includes('menu')) {
-        return ["✓ Cover", "➜ Navigasi", "🎯 Tujuan & Apersepsi", "📖 Materi Inti & Video", "🎮 Kuis Evaluasi"];
+        return ["📋 Petunjuk", "💡 Apersepsi", "🗺️ Peta / Mapping", "📖 Materi", "🎬 Video", "🎮 Kuis"];
       }
       if (tLower.includes('tujuan') || tLower.includes('indikator')) {
         return [`Memahami konsep inti ${topic}`, `Mengidentifikasi komponen penting`, `Mampu menjawab kuis evaluasi`];
@@ -513,7 +513,8 @@ Harap kembalikan dalam struktur JSON Array valid.`;
         ...p,
         headerText: sanitizeHeaderText(p.headerText),
         cleanPrompt: sanitizeHeaderText(p.cleanPrompt),
-        midjourneyPrompt: sanitizeHeaderText(p.midjourneyPrompt)
+        midjourneyPrompt: sanitizeHeaderText(p.midjourneyPrompt),
+        illustrationDesc: sanitizeHeaderText(p.illustrationDesc)
       };
     });
     return res.json({ prompts: sanitizedPrompts, usedModel: usedModel });
