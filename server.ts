@@ -162,7 +162,7 @@ function generateServerFallbackPrompts(payload: any) {
       slideSpecific = `Center displays a clean, prominent title banner reading "${topic}" with subtitle "${subject} - ${ageGroup}". Background features ${theme.bg}. Bottom center has a clean, tactile rounded action button "MULAI BELAJAR". Content-first layout with balanced margins.`;
     } else if (titleLower.includes('navigasi') || titleLower.includes('menu')) {
       headerText = "Pilih Menu Belajar";
-      slideSpecific = `Displays two neat, modular white rounded card buttons with clean icons: "Tujuan Pembelajaran" and "Kuis Interaktif". Spacious layout, high contrast readability. Background features ${theme.bg}.`;
+      slideSpecific = `Main menu navigation board. Displays six neat, modular white rounded card buttons organized in a balanced grid layout with clean matching icons: "1. Tujuan Pembelajaran" (icon: target), "2. Apersepsi" (icon: lightbulb), "3. Peta Pembelajaran" (icon: map), "4. Materi Inti" (icon: book), "5. Video Pembelajaran" (icon: play), and "6. Kuis Interaktif" (icon: game controller). Outstanding spacious layout, high contrast readability, clean typography. Highlighting 'Menu Navigasi' as the current active step in this lesson journey. Background features ${theme.bg}.`;
     } else if (titleLower.includes('tujuan') || titleLower.includes('indikator')) {
       headerText = "Tujuan Pembelajaran";
       slideSpecific = `Right side features a large clean white rounded card container with 3 neatly organized checklist items explaining learning goals for "${topic}". Ample negative space, high contrast typography. Background features ${theme.bg}.`;
@@ -224,7 +224,16 @@ function generateServerFallbackPrompts(payload: any) {
       slideSpecific = `Right side features a large clean white rounded card container with generous whitespace displaying key concepts of "${pageTitle}". Left side has ${characterClause}. Background features ${theme.bg}.`;
     }
 
-    const cleanPrompt = `Clean educational presentation slide UI, ${aspect} aspect ratio. Style: ${visualStyle}. ${characterClause}. ${slideSpecific}. ${detailClause}. Soft ambient studio lighting, sharp focus, 8k resolution, UI/UX educational presentation mockup.`;
+    // Determine active progress tracker label based on slide type (navigasi lokasi)
+    let trackerLabel = "Materi";
+    if (titleLower.includes('cover') || titleLower.includes('sampul')) trackerLabel = "Cover";
+    else if (titleLower.includes('navigasi') || titleLower.includes('menu')) trackerLabel = "Menu";
+    else if (titleLower.includes('kuis') || titleLower.includes('benar') || titleLower.includes('salah')) trackerLabel = "Kuis";
+    else if (titleLower.includes('penutup') || titleLower.includes('selesai') || titleLower.includes('rangkuman')) trackerLabel = "Selesai";
+
+    const progressTrackerClause = `Top edge of the slide features a subtle, minimalist progress bar breadcrumb tracker: [Cover ➔ Navigasi ➔ Materi ➔ Kuis ➔ Selesai], with the active section "${trackerLabel}" beautifully highlighted in a clean colored rounded badge pill`;
+
+    const cleanPrompt = `Clean educational presentation slide UI, ${aspect} aspect ratio. Style: ${visualStyle}. ${progressTrackerClause}. ${characterClause}. ${slideSpecific}. ${detailClause}. Soft ambient studio lighting, sharp focus, 8k resolution, UI/UX educational presentation mockup.`;
     const midjourneyPrompt = `${cleanPrompt} --ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw`;
 
     const structuredSpec = `📐 Layout: ${layout === 'portrait' ? '9:16 Portrait (1080x1920 px)' : '16:9 Landscape (1920x1080 px)'}
@@ -329,6 +338,8 @@ ATURAN VISUAL STYLE & STRICT CLEAN LAYOUT:
    - Panel kartu konten utama: kontainer kartu putih rounded bersih (clean white rounded modular card container, subtle soft shadow, ample whitespace).
    - Penempatan karakter: di sisi tepi/kiri, berpose ramah menyapa atau menunjuk materi, TIDAK MENUTUPI materi atau kartu konten.
    - Tombol: tombol aksi taktil rounded dengan kontras jelas di bagian bawah.
+5. Progress Tracker & Navigasi Lokasi (Breadcrumbs):
+   - Setiap slide wajib mencantumkan indikator lokasi visual di bagian atas berupa breadcrumb tipis: "[Cover ➔ Navigasi ➔ Materi ➔ Kuis ➔ Selesai]" dengan bagian yang sedang aktif disorot dengan badge kontras, menandakan dengan jelas navigasi saat ini sedang berada di bagian mana.
 
 OUTPUT FORMAT UNTUK SETIAP SLIDE:
 1. cleanPrompt: Prompt bahasa Inggris murni yang mengalir alami, siap paste langsung ke Midjourney v6, Canva Magic Media, Imagen 3, atau DALL-E 3.
