@@ -1,0 +1,6 @@
+{
+  "name": "EduSmart Lab - Media Pembelajaran Interaktif",
+  "description": "Platform asisten guru pintar untuk merancang materi visual, maskot, dan visualisasi media pembelajaran interaktif step-by-step menggunakan prompt AI premium.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
