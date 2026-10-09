@@ -262,6 +262,37 @@ export const MASCOT_STYLE_RECOMMENDATIONS = [
   { id: "scifi", label: "Cyber Sci-Fi Tech", icon: "🚀", desc: "Aksen hologram cerdas berteknologi masa depan" },
 ];
 
+export const DETAIL_LEVELS = [
+  { 
+    id: "clean-minimalis", 
+    name: "Clean Minimalis (Sesuai Contoh Gambar)", 
+    badge: "Rekomendasi",
+    desc: "Latar sederhana, sedikit ornamen, ikon jelas, kartu rounded putih bersih, whitespace lega, fokus pada keterbacaan & estetika UI.",
+    icon: "✨" 
+  },
+  { 
+    id: "3d-premium", 
+    name: "3D Premium Glossy", 
+    badge: "Populer",
+    desc: "Karakter 3D bervolume mengilap, pencahayaan lembut studio, kartu translucent modern, dan antarmuka interaktif yang elegan.",
+    icon: "💎" 
+  },
+  { 
+    id: "3d-detail-tinggi", 
+    name: "3D Detail Tinggi", 
+    badge: "Sinematik",
+    desc: "Lingkungan lebih kaya, tekstur terperinci, karakter ekspresif, elemen tematik, namun tetap mempertahankan layout rapi.",
+    icon: "🌟" 
+  },
+  { 
+    id: "adaptif-otomatis", 
+    name: "Adaptif Otomatis", 
+    badge: "Fleksibel",
+    desc: "AI menentukan tingkat detail yang paling cocok untuk mata pelajaran dan jenjang usia siswa secara adaptif.",
+    icon: "🤖" 
+  }
+];
+
 export const MASCOT_CHARACTER_ARCHETYPES = [
   { name: "🤖 Robot Sains Ramah", desc: "Robot cilik berwarna putih-biru berkacamata pintar dan membawa tablet interaktif sains" },
   { name: "🐰 Kelinci Penjelajah", desc: "Kelinci cerdik berjaket penjelajah membawa kaca pembesar dan tas ransel petualangan" },
@@ -274,6 +305,8 @@ export const MASCOT_CHARACTER_ARCHETYPES = [
 interface GeneratedPrompt {
   pageTitle: string;
   headerText: string;
+  cleanPrompt: string;
+  midjourneyPrompt: string;
   illustrationDesc: string;
   canvaKeywords?: string;
   navigationButtons: string;
@@ -302,6 +335,7 @@ export default function App() {
   const [pages, setPages] = useState<string[]>(STANDARD_13_PAGES);
   const [layout, setLayout] = useState<"landscape" | "portrait">("landscape");
   const [visualStyle, setVisualStyle] = useState<string>("Flat Cartoon / 2D Vector Education");
+  const [detailLevel, setDetailLevel] = useState<string>("clean-minimalis");
   const [language, setLanguage] = useState<string>("Indonesia");
   const [mascotType, setMascotType] = useState<string>("generate");
   const [customMascot, setCustomMascot] = useState<string>("");
@@ -320,6 +354,8 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [results, setResults] = useState<GeneratedPrompt[] | null>(null);
+  const [promptFormatMode, setPromptFormatMode] = useState<'clean' | 'midjourney' | 'spec'>('clean');
+  const [cardViewModes, setCardViewModes] = useState<Record<number, 'clean' | 'midjourney' | 'spec'>>({});
   const [aiEngineUsed, setAiEngineUsed] = useState<boolean>(false);
   const [loadingText, setLoadingText] = useState<string>("");
   const [showGuide, setShowGuide] = useState<boolean>(false);
@@ -683,6 +719,92 @@ export default function App() {
     }
   };
 
+  // Helper to generate an ultra-clean prompt matching the reference slide UI screenshots
+  const generateCleanPromptForPage = (pageTitle: string, index: number) => {
+    const aspect = layout === 'portrait' ? '9:16 vertical portrait' : '16:9 landscape';
+    const titleLower = pageTitle.toLowerCase();
+
+    // 1. Style clause
+    let styleClause = "3D Pixar clay glossy style, smooth volume, soft rounded shapes, cheerful studio lighting, modern claymorphic elements";
+    if (visualStyle.includes("Flat Cartoon") || visualStyle.includes("2D Vector")) {
+      styleClause = "flat 2D vector educational illustration style, clean solid colors, crisp outlines, modern minimalist aesthetic";
+    } else if (visualStyle.includes("Kawaii") || visualStyle.includes("Chibi")) {
+      styleClause = "kawaii pastel chibi illustration style, cute oversized head proportion, friendly blushing face, soft pastel color palette";
+    } else if (visualStyle.includes("Anime") || visualStyle.includes("Ghibli")) {
+      styleClause = "Japanese anime studio Ghibli aesthetic, hand-painted scenic textures, warm natural lighting";
+    } else if (visualStyle.includes("Watercolor")) {
+      styleClause = "soft watercolor storybook illustration style, gentle artistic brush strokes, calming aesthetic";
+    } else if (visualStyle.includes("Paper")) {
+      styleClause = "layered 3D paper cut craft style, depth and paper textures, clean geometric curves";
+    } else if (visualStyle.includes("Doodle") || visualStyle.includes("Hand-Drawn")) {
+      styleClause = "charming hand-drawn doodle style, playful pencil sketch outlines, clean and friendly";
+    } else if (visualStyle.includes("Memphis")) {
+      styleClause = "modern Memphis retro educational design, bold geometric shapes, clean vibrant contrast";
+    } else if (visualStyle.includes("diorama")) {
+      styleClause = "whimsical 3D miniature diorama, tilt-shift camera angle, warm studio lighting";
+    } else if (visualStyle.includes("Pixel") || visualStyle.includes("Low Poly")) {
+      styleClause = "isometric low-poly 3D educational game UI, clean polygonal forms, bright palette";
+    } else if (visualStyle.includes("Engraving") || visualStyle.includes("Vintage")) {
+      styleClause = "vintage textbook engraving style, fine ink line etching, elegant scientific illustration";
+    } else if (visualStyle.includes("Sci-Fi") || visualStyle.includes("Hologram")) {
+      styleClause = "clean futuristic sci-fi hologram style, subtle cyan glowing accents, high-tech educational UI";
+    }
+
+    // 2. Character clause
+    let characterClause = "Left side features a cute 3D Pixar-style elementary student character smiling warmly and gesturing towards the content";
+    if (mascotType === 'none') {
+      characterClause = "Clean minimalist presentation slide UI focused purely on core diagrams and lesson content without mascot characters";
+    } else if (mascotType === 'custom' && mascotImageName) {
+      characterClause = `Left side features a cute friendly tutor character inspired by the uploaded character photo ("${mascotImageName}", ${customMascot || 'friendly teacher companion'}), smiling and gesturing towards the slide content`;
+    } else if (mascotType === 'custom' && customMascot) {
+      characterClause = `Left side features a cute friendly tutor character (${customMascot}) with expressive eyes and cheerful smile`;
+    }
+
+    // 3. Detail level modifier
+    let detailClause = "Ultra-clean minimalist composition, generous whitespace, pristine negative space, zero visual clutter, neat rounded card container, high contrast readability";
+    if (detailLevel === '3d-premium') {
+      detailClause = "3D premium glossy aesthetic, soft studio rim lighting, modern rounded translucent card container, polished surfaces, generous whitespace";
+    } else if (detailLevel === '3d-detail-tinggi') {
+      detailClause = "Rich thematic environment with detailed textures, expressive character, balanced layout with ample negative space and clean modular cards";
+    } else if (detailLevel === 'adaptif-otomatis') {
+      detailClause = "Balanced educational presentation UI, generous whitespace, clean layout hierarchy, clutter-free";
+    }
+
+    // 4. Slide specific layout
+    let slideSpecific = "";
+    if (titleLower.includes('cover') || titleLower.includes('sampul')) {
+      slideSpecific = `Center displays a large, clean title banner reading "${topic}" with playful yet clean typography. Soft background of gentle rolling green meadow hills, miniature stylized trees, and pastel blue sunny sky with fluffy 3D clay clouds. Bottom center has a prominent glossy rounded orange play button labeled "MULAI".`;
+    } else if (titleLower.includes('navigasi') || titleLower.includes('menu')) {
+      slideSpecific = `Center and right side display two prominent clean rounded white card buttons with subtle drop shadows: one with a glowing target icon labeled "Tujuan Pembelajaran", and another with a gamepad icon labeled "Kuis Interaktif". Cheerful pastel landscape background with soft rolling hills and daisy flowers.`;
+    } else if (titleLower.includes('tujuan') || titleLower.includes('indikator')) {
+      slideSpecific = `Right side features a large clean white rounded card container with soft shadow, containing 3 neatly organized checklist items with glowing flag badges and generous whitespace. Soft warm outdoor meadow background.`;
+    } else if (titleLower.includes('apersepsi') || titleLower.includes('pengantar') || titleLower.includes('motivasi')) {
+      slideSpecific = `Center displays an enchanting, stylized glowing mystery treasure chest on a neat circular pedestal, slightly opened with soft golden light emanating, introducing the wonders of "${topic}". Mascot peeking with an excited curious expression. Clean minimalist background with soft gradient sky and gentle grassy hill.`;
+    } else if (titleLower.includes('peta') || titleLower.includes('perjalanan') || titleLower.includes('titik kuis')) {
+      slideSpecific = `Features a neat, curved dotted trail connecting 4 colorful rounded numbered checkpoint pins (1, 2, 3, 4) across a clean stylized landscape. Mascot standing happily at checkpoint 1 with an adventure backpack. Clear header banner "Peta Petualangan Kuis".`;
+    } else if (titleLower.includes('kuis 1') || titleLower.includes('penyerbukan')) {
+      slideSpecific = `Right side features a large clean white rounded card container with subtle drop shadow, displaying question text at top and 4 neat answer option cards with circular orange letter badges (A, B, C, D) and clean dashed dividers. Thematic background of colorful flowers, honeybee, and soft green garden.`;
+    } else if (titleLower.includes('kuis 2') || titleLower.includes('ikan')) {
+      slideSpecific = `Right side features a large clean white rounded card container with subtle drop shadow, displaying question text and 4 clean horizontal option pills with colorful circular badges (A, B, C, D). Thematic background of a clean crystal-clear blue aquatic pond with gentle water ripples and friendly fish.`;
+    } else if (titleLower.includes('kuis 3') || titleLower.includes('konsumen') || titleLower.includes('rantai')) {
+      slideSpecific = `Right side features a large clean white rounded card with soft drop shadow, displaying question header and 4 neat multiple-choice options with circular badges (A, B, C, D). Thematic background of a sunlit grassy meadow ecosystem with clean stylized plant and herbivore elements.`;
+    } else if (titleLower.includes('kuis 4') || titleLower.includes('matahari') || titleLower.includes('biotik')) {
+      slideSpecific = `Right side features a large clean white rounded card with soft drop shadow, displaying question header and 4 tidy option cards with circular badges (A, B, C, D). Thematic background of bright warm golden sunbeams illuminating a clean grassy landscape.`;
+    } else if (titleLower.includes('respon benar') || titleLower.includes('benar')) {
+      slideSpecific = `Center displays three large glowing 3D golden achievement stars with soft sparkle ribbons and subtle floating confetti. Mascot jumping joyfully in victory. Clean white rounded badge reading "JAWABAN BENAR / HEBAT!". Bottom features a glossy rounded emerald button "Lanjut ke Tantangan Berikutnya". Soft cheerful meadow background.`;
+    } else if (titleLower.includes('respon salah') || titleLower.includes('salah')) {
+      slideSpecific = `Mascot with a warm, caring smile holding a glowing lightbulb idea lamp, with a friendly clean speech bubble "Ayo Coba Lagi, Kamu Pasti Bisa!". Clean white rounded card offering hint buttons "Lihat Petunjuk" and "Ulangi Soal". Soft pastel background.`;
+    } else if (titleLower.includes('rangkuman') || titleLower.includes('summary')) {
+      slideSpecific = `Center displays a large clean white rounded board container with soft drop shadow, organized into 4 neat summary cards with colorful topic icons summarizing key points of "${topic}". Mascot on the side pointing towards the board with a cheerful expression. Soft pastel landscape background.`;
+    } else if (titleLower.includes('penutup') || titleLower.includes('selesai')) {
+      slideSpecific = `Center displays a cheerful congratulations banner celebrating completion of the learning mission for "${topic}". Mascot waving happily with a small graduation cap next to a gleaming trophy. Prominent glossy rounded orange button labeled "SELESAI". Soft sunny sky background.`;
+    } else {
+      slideSpecific = `Right side features a large clean white rounded card container with generous whitespace displaying key concepts of "${pageTitle}". Soft gentle themed landscape background for "${topic}".`;
+    }
+
+    return `Clean educational presentation slide UI, ${aspect} aspect ratio. ${styleClause}. ${characterClause}. ${slideSpecific} ${detailClause}. Soft ambient studio lighting, sharp focus, 8k resolution, UI/UX educational presentation slide mockup.`;
+  };
+
   // Local fallback generator (when Gemini is not configured or fails)
   const generateLocalPromptsFallback = () => {
     const layoutSize = layout === 'portrait' ? '9:16 (Portrait)' : '16:9 (Landscape)';
@@ -691,29 +813,22 @@ export default function App() {
 
     return pages.map((pageTitle, index) => {
       let headerText = pageTitle;
-      let concept = "";
       let quizData: any = undefined;
       const titleLower = pageTitle.toLowerCase();
 
-      // Brainstorm contextual designs for each page in standard 13 sequence
+      // Quiz data generation
       if (titleLower.includes('cover') || titleLower.includes('sampul')) {
         headerText = topic || "Media Pembelajaran Interaktif";
-        concept = `An eye-catching, welcoming splash cover slide introducing the topic "${topic}". The design features a large, beautifully illustrated central concept symbol (e.g., an eco-globe, celestial model, or interactive nature diorama) with bright, welcoming atmosphere.`;
       } else if (titleLower.includes('navigasi') || titleLower.includes('menu')) {
         headerText = "Pilih Menu Belajar";
-        concept = `An interactive dual navigation dashboard featuring 2 prominent clickable stylized wooden/gem banner buttons: "🎯 TUJUAN PEMBELAJARAN" on the left and "🎮 KUIS INTERAKTIF" on the right. Balanced whitespace, clear icons, and cheerful educational ambiance.`;
       } else if (titleLower.includes('tujuan') || titleLower.includes('indikator')) {
         headerText = "Tujuan Pembelajaran Kita";
-        concept = `A structured, goal-oriented slide showing 3 glowing badges/checklist flags on a clean classroom desk, displaying the 3 main competency objectives of learning "${topic}". Highly readable and motivating.`;
       } else if (titleLower.includes('apersepsi') || titleLower.includes('pengantar') || titleLower.includes('motivasi')) {
         headerText = "Mari Berpikir & Jelajahi!";
-        concept = `An intriguing curiosity hook slide: a floating mystery treasure chest or glowing magnifying glass revealing magical elements of "${topic}" that spark deep questions and excitement.`;
       } else if (titleLower.includes('peta') || titleLower.includes('perjalanan') || titleLower.includes('titik kuis')) {
         headerText = "Peta Petualangan 4 Titik Kuis";
-        concept = `An engaging treasure quest map / journey roadmap with a winding dashed trail connecting 4 numbered checkpoint flagpins (Titik 1: Penyerbukan, Titik 2: Dunia Air, Titik 3: Rantai Makanan, Titik 4: Biotik & Abiotik). Mascot ready at the starting line.`;
       } else if (titleLower.includes('kuis 1') || titleLower.includes('penyerbukan')) {
         headerText = "Kuis 1: Siapa yang Membantu Penyerbukan Bunga?";
-        concept = `A colorful close-up flower garden scene showing vibrant blossom petals with bright sunlight, welcoming a friendly honeybee and colorful butterfly. Clear multiple-choice question box with 4 clean option cards.`;
         quizData = {
           question: "Siapa yang membantu penyerbukan bunga saat mencari nektar?",
           options: ["A. Lebah dan kupu-kupu", "B. Ikan di sungai", "C. Cacing di tanah", "D. Katak di kolam"],
@@ -722,7 +837,6 @@ export default function App() {
         };
       } else if (titleLower.includes('kuis 2') || titleLower.includes('ikan')) {
         headerText = "Kuis 2: Di Mana Ikan Hidup?";
-        concept = `A lively underwater aquatic habitat illustration with crystal-clear blue water, gentle ripples, colorful aquatic plants, and friendly swimming fish breathing with visible gills. Clean quiz prompt interface.`;
         quizData = {
           question: "Di mana habitat alami tempat ikan hidup dan bernapas menggunakan insang?",
           options: ["A. Di daratan kering", "B. Di air (sungai, danau, laut)", "C. Di atas pucuk pohon", "D. Di bawah lapisan tanah tanpa air"],
@@ -731,7 +845,6 @@ export default function App() {
         };
       } else if (titleLower.includes('kuis 3') || titleLower.includes('konsumen') || titleLower.includes('rantai')) {
         headerText = "Kuis 3: Siapa Konsumen Tingkat Pertama pada Rantai Makanan?";
-        concept = `An educational food chain pyramid visual slide showing green grass, grasshopper, frog, and eagle. Central quiz card highlighting primary consumers in a playful nature ecosystem setting.`;
         quizData = {
           question: "Dalam rantai makanan ekosistem, siapakah yang berperan sebagai konsumen tingkat pertama (primer)?",
           options: ["A. Herbivora (hewan pemakan tumbuhan)", "B. Karnivora puncak (singa/elang)", "C. Jamur & dekomposer pengurai", "D. Tumbuhan berklorofil (produsen)"],
@@ -740,7 +853,6 @@ export default function App() {
         };
       } else if (titleLower.includes('kuis 4') || titleLower.includes('matahari') || titleLower.includes('biotik')) {
         headerText = "Kuis 4: Cahaya Matahari Termasuk Komponen Biotik?";
-        concept = `A warm, illuminating landscape illustrating the sun's golden rays touching rocks, water, soil, and living plants. Side-by-side comparison between living and non-living environmental factors.`;
         quizData = {
           question: "Apakah cahaya matahari termasuk ke dalam kelompok komponen biotik dalam suatu ekosistem?",
           options: ["A. Benar, karena menghasilkan energi hangat", "B. Salah, cahaya matahari adalah komponen Abiotik", "C. Benar, karena termasuk makhluk hidup", "D. Benar, karena memiliki warna cerah"],
@@ -749,49 +861,45 @@ export default function App() {
         };
       } else if (titleLower.includes('respon benar') || titleLower.includes('benar')) {
         headerText = "Luar Biasa! Jawabanmu Benar Sekali ⭐⭐⭐";
-        concept = `A jubilant celebration screen! 3 glowing golden achievement stars shine at the top center, colorful confetti ribbons rain down gracefully, friendly mascot leaps with victory, and a golden banner reads 'HEBAT SEKALI!'`;
       } else if (titleLower.includes('respon salah') || titleLower.includes('salah')) {
         headerText = "Hampir Tepat! Yuk Coba Sekali Lagi 💡";
-        concept = `A warm, caring, child-friendly motivation screen! Friendly mascot holds a study lamp with an encouraging warm smile and a hint speech bubble: 'Jangan menyerah, kamu pasti bisa! Mari baca petunjuk dan coba lagi!'`;
       } else if (titleLower.includes('rangkuman') || titleLower.includes('summary')) {
         headerText = "Rangkuman / Intisari Materi";
-        concept = `A neat, visually categorized laboratory corkboard or summary shelf displaying 4 tidy concept cards highlighting the essential facts of "${topic}". Clean typography, soft shadows, and warm lighting.`;
       } else if (titleLower.includes('penutup') || titleLower.includes('selesai')) {
         headerText = "Selamat! Misi Belajar Selesai 🎓";
-        concept = `A warm graduation finale screen! Friendly mascot waves happily wearing a small graduation cap, surrounded by glowing achievement trophies, thank-you banner, and a prominent 'SELESAI' button.`;
       } else {
         headerText = pageTitle;
-        concept = `A vivid and clean instructional diagram illustrating the mechanisms of "${pageTitle}" for topic "${topic}". Balanced step-by-step cycle layout with organic connection lines so students easily understand the concept.`;
       }
 
-      // Handle mascot insertion
-      let mascotClause = "";
-      if (mascotType === 'generate') {
-        mascotClause = `An animated, cute, and friendly educational sidekick mascot relevant to the topic of "${topic}" is actively shown on the slide, with big expressive eyes, smiling and guiding the learner.`;
-      } else if (mascotType === 'custom') {
-        if (mascotImageName) {
-          mascotClause = `Custom character mascot based on the teacher's uploaded reference image ("${mascotImageName}"): ${customMascot || 'friendly educational tutor mascot'}. Maintain precise character consistency, visual features, colors, and friendly expressions matching the uploaded photo.`;
-        } else if (customMascot) {
-          mascotClause = `The mascot "${customMascot}" is prominently integrated into the scene, looking friendly, helpful, and guiding the young learner with clear hand gestures.`;
-        } else {
-          mascotClause = `An endearing character mascot designed as a friendly tutor companion guiding the student.`;
-        }
-      }
+      // Generate ultra-clean prompt and Midjourney command
+      const cleanPrompt = generateCleanPromptForPage(pageTitle, index);
+      const midjourneyPrompt = `${cleanPrompt} --ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw`;
 
-      const generatedDesc = `Ukuran: ${layoutSize}
-Style: ${visualStyle}
-Background Environment: Lingkungan visual yang mendalam dan hidup merepresentasikan materi "${topic || 'Materi Pembelajaran'}".
-Center Subject / Graphic: ${concept}
-Header Text: "${headerText}"
-Integrated Mascots & Details: ${mascotClause || 'Desain bersih dan terfokus pada konten pembelajaran.'}
-Canva Search Keywords: ${canvaKeywords}
-UI Navigation Buttons: Tombol interaktif yang bersih dan mudah ditekan.
-Atmosphere: Bright, cozy, friendly lighting, balanced composition with generous whitespace, presentation-ready, 8K resolution, 300 dpi, highly detailed.`;
+      // Structured Indonesian guide
+      const mascotClause = mascotType === 'none' 
+        ? 'Tanpa maskot (fokus murni diagram dan materi sains).' 
+        : mascotType === 'custom' && mascotImageName 
+          ? `Karakter tutor kustom berdasarkan foto referensi "${mascotImageName}".`
+          : mascotType === 'custom' && customMascot 
+            ? `Karakter tutor "${customMascot}".`
+            : 'Maskot tutor ramah yang menyapa siswa di sisi kiri slide.';
+
+      const structuredSpec = `📐 Layout: ${layoutSize} (1920x1080 px Landscape / 1080x1920 px Portrait)
+✨ Tingkat Detail: ${detailLevel === 'clean-minimalis' ? 'Clean Minimalis (Sesuai Contoh Gambar)' : detailLevel}
+🎨 Gaya Visual: ${visualStyle}
+🌿 Latar Belakang: Lanskap lembut perbukitan hijau, langit cerah pastel, dan sentuhan visual topik "${topic}".
+🧑‍🎓 Karakter Pendamping: ${mascotClause}
+📄 Kartu Konten Utama: Kontainer kartu putih rounded (sudut melengkung halus) dengan drop shadow lembut dan ruang kosong (whitespace) lega untuk materi & opsi kuis.
+🔘 Tombol Interaktif: Tombol rounded taktil mengilap (glossy pill button) berwarna cerah kontras.
+🎨 Palet Warna: Hijau pastel, biru langit lembut, oranye ceria, putih bersih (kontras tinggi, ramah anak).
+🔍 Kata Kunci Canva: ${canvaKeywords}`;
 
       return {
         pageTitle: `Halaman ${index + 1}: ${pageTitle}`,
         headerText: headerText,
-        illustrationDesc: generatedDesc,
+        cleanPrompt: cleanPrompt,
+        midjourneyPrompt: midjourneyPrompt,
+        illustrationDesc: structuredSpec,
         canvaKeywords: canvaKeywords,
         navigationButtons: index === 0 ? "MULAI BELAJAR!" : index === pages.length - 1 ? "SELESAI & ULANGI" : "LANJUT",
         estimatedTime: "1-2 Menit",
@@ -813,6 +921,7 @@ Atmosphere: Bright, cozy, friendly lighting, balanced composition with generous 
       pages,
       layout,
       visualStyle,
+      detailLevel,
       language,
       mascot: {
         type: mascotType,
@@ -838,12 +947,17 @@ Atmosphere: Bright, cozy, friendly lighting, balanced composition with generous 
 
       const data = await response.json();
       if (data.prompts && Array.isArray(data.prompts)) {
-        // Ensure canvaKeywords is attached if missing from API
         const selectedStyleObj = VISUAL_STYLES.find(s => s.id === visualStyle) || VISUAL_STYLES[0];
-        const enrichedPrompts = data.prompts.map((p: any) => ({
-          ...p,
-          canvaKeywords: p.canvaKeywords || selectedStyleObj.canvaKeywords
-        }));
+        const enrichedPrompts = data.prompts.map((p: any, idx: number) => {
+          const fallbackClean = generateCleanPromptForPage(pages[idx] || p.pageTitle, idx);
+          const clean = p.cleanPrompt || fallbackClean;
+          return {
+            ...p,
+            cleanPrompt: clean,
+            midjourneyPrompt: p.midjourneyPrompt || `${clean} --ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw`,
+            canvaKeywords: p.canvaKeywords || selectedStyleObj.canvaKeywords
+          };
+        });
         setResults(enrichedPrompts);
         setAiEngineUsed(true);
       } else {
@@ -874,12 +988,34 @@ Atmosphere: Bright, cozy, friendly lighting, balanced composition with generous 
     setTimeout(() => setCopiedCanvaIdx(null), 2000);
   };
 
-  const copyAllPrompts = () => {
+  const copyAllCleanPrompts = () => {
     if (!results) return;
-    const allText = results.map(r => `=== ${r.pageTitle} ===\n${r.illustrationDesc}\nKata Kunci Canva: ${r.canvaKeywords || ''}\n\n`).join('');
+    const allText = results.map(r => `=== ${r.pageTitle} ===\n${r.cleanPrompt}\n🔍 Kata Kunci Canva: ${r.canvaKeywords || ''}\n\n`).join('');
     navigator.clipboard.writeText(allText);
     setCopiedAll(true);
     setTimeout(() => setCopiedAll(false), 2000);
+  };
+
+  const copyAllMidjourneyPrompts = () => {
+    if (!results) return;
+    const allText = results.map(r => `=== ${r.pageTitle} ===\n/imagine prompt: ${r.midjourneyPrompt || r.cleanPrompt}\n\n`).join('');
+    navigator.clipboard.writeText(allText);
+    setCopiedAll(true);
+    setTimeout(() => setCopiedAll(false), 2000);
+  };
+
+  const copyAllPrompts = () => {
+    if (promptFormatMode === 'clean') {
+      copyAllCleanPrompts();
+    } else if (promptFormatMode === 'midjourney') {
+      copyAllMidjourneyPrompts();
+    } else {
+      if (!results) return;
+      const allText = results.map(r => `=== ${r.pageTitle} ===\n${r.illustrationDesc}\n🔍 Kata Kunci Canva: ${r.canvaKeywords || ''}\n\n`).join('');
+      navigator.clipboard.writeText(allText);
+      setCopiedAll(true);
+      setTimeout(() => setCopiedAll(false), 2000);
+    }
   };
 
   const resetWizard = () => {
@@ -1572,12 +1708,54 @@ Atmosphere: Bright, cozy, friendly lighting, balanced composition with generous 
                 <div className="flex flex-col gap-5 animate-fade-in">
                   <div>
                     <div className="flex items-center justify-between">
-                      <h2 className="text-xl font-bold text-forest-900 font-display">Langkah 5: Tentukan Gaya Visual Gambar</h2>
+                      <h2 className="text-xl font-bold text-forest-900 font-display">Langkah 5: Tentukan Gaya Visual & Tingkat Detail</h2>
                       <span className="text-[11px] bg-forest-100 text-forest-800 font-bold px-2.5 py-0.5 rounded-full font-mono">
                         12 Rekomendasi Edukasi
                       </span>
                     </div>
-                    <p className="text-xs text-neutral-500 mt-1">Pilih gaya artistik gambar untuk merangsang estetika belajar siswa Anda (tersedia 12 pilihan lengkap termasuk 2D, 3D, Anime, Kawaii, dsb).</p>
+                    <p className="text-xs text-neutral-500 mt-1">Pilih tingkat detail dan gaya artistik gambar untuk merangsang estetika belajar siswa Anda (tersedia 12 pilihan lengkap termasuk 2D, 3D, Anime, Kawaii, dsb).</p>
+                  </div>
+
+                  {/* Tingkat Detail Visual (Master Prompt Section 3 & Referensi Gambar) */}
+                  <div className="bg-gradient-to-br from-amber-50/70 via-orange-50/40 to-amber-50/60 border border-amber-200/80 rounded-2xl p-4 flex flex-col gap-3 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="p-1 bg-amber-500 text-white rounded-lg text-xs">✨</span>
+                        <div>
+                          <h3 className="text-xs font-bold text-forest-950 font-display">Pilihan Tingkat Detail Desain (Sesuai Referensi Gambar)</h3>
+                          <p className="text-[11px] text-neutral-600">Pilih kerapian dan kepadatan ornamen pada slide presentasi Anda.</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-full font-mono">
+                        Master Prompt
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                      {DETAIL_LEVELS.map((lvl) => (
+                        <button
+                          key={lvl.id}
+                          type="button"
+                          onClick={() => setDetailLevel(lvl.id)}
+                          className={`p-3 rounded-xl border text-left flex flex-col gap-1.5 transition-all cursor-pointer ${
+                            detailLevel === lvl.id
+                              ? 'bg-white border-amber-500 ring-2 ring-amber-300 shadow-sm'
+                              : 'bg-white/80 border-amber-100/80 hover:bg-white hover:border-amber-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-lg">{lvl.icon}</span>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md font-mono ${
+                              detailLevel === lvl.id ? 'bg-amber-500 text-white' : 'bg-neutral-100 text-neutral-600'
+                            }`}>
+                              {lvl.badge}
+                            </span>
+                          </div>
+                          <p className="text-xs font-bold text-forest-950">{lvl.name}</p>
+                          <p className="text-[10px] text-neutral-500 leading-tight">{lvl.desc}</p>
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Filter Kategori Gaya */}
@@ -1919,6 +2097,13 @@ Atmosphere: Bright, cozy, friendly lighting, balanced composition with generous 
                       <span className="text-xs font-bold text-forest-950">{visualStyle}</span>
                     </div>
 
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold uppercase text-neutral-400">Tingkat Detail Visual</span>
+                      <span className="text-xs font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80 inline-block w-fit font-mono">
+                        {DETAIL_LEVELS.find(d => d.id === detailLevel)?.name || detailLevel}
+                      </span>
+                    </div>
+
                     <div className="flex flex-col gap-1 col-span-1 md:col-span-2 border-t border-dashed border-[#EBE3D3] pt-3">
                       <span className="text-[10px] font-bold uppercase text-neutral-400">Struktur Materi ({pages.length} Slide)</span>
                       <div className="flex flex-wrap gap-1.5 mt-1">
@@ -2074,48 +2259,100 @@ Atmosphere: Bright, cozy, friendly lighting, balanced composition with generous 
           <div className="flex flex-col gap-6 animate-fade-in">
             
             {/* Header Result summary */}
-            <div className="bg-white border border-[#F2EDE2] rounded-3xl p-6 md:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="flex flex-col gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[10px] bg-coral-600 text-white font-mono px-2 py-0.5 rounded-md uppercase tracking-wider">
-                    Selesai Dibuat
-                  </span>
-                  <span className={`text-xs font-mono px-2 py-0.5 rounded-md flex items-center gap-1.5 ${
-                    aiEngineUsed 
-                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold' 
-                      : 'bg-neutral-100 text-neutral-600'
-                  }`}>
-                    <Cpu className={`w-3 h-3 ${aiEngineUsed ? 'text-emerald-600' : ''}`} /> 
-                    {aiEngineUsed ? "Mesin: Google Gemini AI (Online)" : "Mesin: Template EduSmart Lokal"}
-                  </span>
-                  {mascotType === 'custom' && mascotImage && (
-                    <span className="text-xs bg-amber-50 text-amber-900 border border-amber-200 font-semibold px-2 py-0.5 rounded-md flex items-center gap-1.5 font-mono">
-                      <img src={mascotImage} alt="Foto Karakter" className="w-4 h-4 rounded-full object-cover border border-amber-500" />
-                      Karakter Foto: {mascotImageName}
+            <div className="bg-white border border-[#F2EDE2] rounded-3xl p-6 md:p-8 shadow-sm flex flex-col gap-5">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] bg-coral-600 text-white font-mono px-2 py-0.5 rounded-md uppercase tracking-wider font-bold">
+                      Selesai Dibuat
                     </span>
-                  )}
+                    <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 font-semibold flex items-center gap-1.5">
+                      <span>✨</span> Detail: {DETAIL_LEVELS.find(d => d.id === detailLevel)?.name || detailLevel}
+                    </span>
+                    <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-sky-50 text-sky-800 border border-sky-200 font-semibold">
+                      📐 {layout === 'landscape' ? '16:9 Landscape' : '9:16 Portrait'}
+                    </span>
+                    <span className={`text-xs font-mono px-2 py-0.5 rounded-md flex items-center gap-1.5 ${
+                      aiEngineUsed 
+                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold' 
+                        : 'bg-neutral-100 text-neutral-600'
+                    }`}>
+                      <Cpu className={`w-3 h-3 ${aiEngineUsed ? 'text-emerald-600' : ''}`} /> 
+                      {aiEngineUsed ? "Mesin: Google Gemini AI (Online)" : "Mesin: Template EduSmart Lokal"}
+                    </span>
+                    {mascotType === 'custom' && mascotImage && (
+                      <span className="text-xs bg-amber-50 text-amber-900 border border-amber-200 font-semibold px-2 py-0.5 rounded-md flex items-center gap-1.5 font-mono">
+                        <img src={mascotImage} alt="Foto Karakter" className="w-4 h-4 rounded-full object-cover border border-amber-500" />
+                        Karakter Foto: {mascotImageName}
+                      </span>
+                    )}
+                  </div>
+                  <h2 className="text-2xl font-bold text-forest-900 font-display">Prompt Visual: &ldquo;{topic}&rdquo;</h2>
+                  <p className="text-xs text-neutral-500 max-w-2xl leading-relaxed">
+                    Hasil formulasi prompt visual premium bergaya bersih (clean minimalis) sesuai gambar referensi Anda. Salin prompt di bawah ini untuk digunakan langsung pada generator AI gambar (Canva Magic Media, Midjourney, DALL-E, atau Imagen 3).
+                  </p>
                 </div>
-                <h2 className="text-2xl font-bold text-forest-900 font-display">Prompt Visual: &ldquo;{topic}&rdquo;</h2>
-                <p className="text-xs text-neutral-500 max-w-xl">
-                  Berikut adalah {results.length} prompt visual premium siap pakai. Salin teks prompt di bawah ini lalu tempelkan ke tools AI pilihan Anda (Midjourney, DALL-E, atau Canva Magic Media).
-                </p>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={copyAllPrompts}
+                    className="px-4 py-2.5 bg-forest-900 hover:bg-forest-800 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
+                  >
+                    {copiedAll ? <Check className="w-4 h-4 text-green-300" /> : <Copy className="w-4 h-4" />}
+                    {copiedAll ? "Tersalin Semua!" : promptFormatMode === 'clean' ? "Salin Semua Prompt Bersih" : promptFormatMode === 'midjourney' ? "Salin Semua Midjourney" : "Salin Semua Spesifikasi"}
+                  </button>
+                  
+                  <button
+                    onClick={resetWizard}
+                    className="px-4 py-2.5 bg-neutral-50 hover:bg-neutral-100 text-forest-900 text-xs font-bold rounded-xl border border-neutral-200 transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <RefreshCw className="w-4 h-4" /> Mulai Baru
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  onClick={copyAllPrompts}
-                  className="px-4 py-2.5 bg-forest-900 hover:bg-forest-800 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
-                >
-                  {copiedAll ? <Check className="w-4 h-4 text-green-300" /> : <Copy className="w-4 h-4" />}
-                  {copiedAll ? "Tersalin Semua!" : "Salin Semua Prompt"}
-                </button>
-                
-                <button
-                  onClick={resetWizard}
-                  className="px-4 py-2.5 bg-neutral-50 hover:bg-neutral-100 text-forest-900 text-xs font-bold rounded-xl border border-neutral-200 transition-all cursor-pointer flex items-center gap-1.5"
-                >
-                  <RefreshCw className="w-4 h-4" /> Mulai Baru
-                </button>
+              {/* Format Switcher Bar & Pro Tip Banner */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-neutral-100">
+                <div className="flex items-center gap-1 p-1 bg-neutral-100/90 rounded-xl w-fit">
+                  <button
+                    type="button"
+                    onClick={() => setPromptFormatMode('clean')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      promptFormatMode === 'clean'
+                        ? 'bg-white text-forest-950 shadow-xs'
+                        : 'text-neutral-600 hover:text-forest-900'
+                    }`}
+                  >
+                    <span>⚡</span> Prompt Bersih (AI Image Ready)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPromptFormatMode('midjourney')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      promptFormatMode === 'midjourney'
+                        ? 'bg-white text-forest-950 shadow-xs'
+                        : 'text-neutral-600 hover:text-forest-900'
+                    }`}
+                  >
+                    <span>🎨</span> Format Midjourney (--ar)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPromptFormatMode('spec')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      promptFormatMode === 'spec'
+                        ? 'bg-white text-forest-950 shadow-xs'
+                        : 'text-neutral-600 hover:text-forest-900'
+                    }`}
+                  >
+                    <span>📋</span> Spesifikasi Desain Manual
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-[11px] text-amber-900 bg-amber-50/80 border border-amber-200/60 px-3 py-1.5 rounded-xl font-mono">
+                  <span>💡</span>
+                  <span><strong>Format Bersih:</strong> Tanpa label form administratif, siap langsung generate di Canva & Midjourney!</span>
+                </div>
               </div>
             </div>
 
@@ -2131,132 +2368,246 @@ Atmosphere: Bright, cozy, friendly lighting, balanced composition with generous 
             <div className="grid grid-cols-1 gap-6">
               {results.map((prompt, index) => {
                 const layoutRatio = layout === 'portrait' ? 'max-w-[320px] aspect-[9/16]' : 'max-w-full aspect-[16/9]';
+                const currentCardMode = cardViewModes[index] || promptFormatMode;
+
+                const textToCopy = currentCardMode === 'clean' 
+                  ? prompt.cleanPrompt 
+                  : currentCardMode === 'midjourney' 
+                    ? prompt.midjourneyPrompt 
+                    : prompt.illustrationDesc;
+
                 return (
                   <div 
                     key={index} 
                     className="bg-white border border-[#F2EDE2] rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all grid grid-cols-1 lg:grid-cols-12"
                   >
-                    {/* Left Grid: Premium Layout Mockup Representation */}
-                    <div className="lg:col-span-5 bg-[#FAF6EE]/40 p-6 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-[#FAF6EE] min-h-[220px]">
+                    {/* Left Grid: Clean Educational Slide Mockup Representation */}
+                    <div className="lg:col-span-5 bg-gradient-to-br from-[#FAF6EE] to-[#F3EDE2]/60 p-6 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-[#FAF6EE] min-h-[240px]">
                       <div className="flex flex-col gap-2 items-center w-full">
-                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
-                          MOCKUP FRAME: {prompt.pageTitle.split(':')[0]}
-                        </span>
+                        <div className="flex items-center justify-between w-full px-1">
+                          <span className="text-[10px] font-bold text-forest-700 uppercase tracking-widest font-mono">
+                            MOCKUP SLIDE {index + 1}
+                          </span>
+                          <span className="text-[10px] bg-white/80 border border-[#EBE3D3] text-forest-900 font-bold px-2 py-0.5 rounded-full font-mono">
+                            {layout === 'landscape' ? '16:9 Landscape' : '9:16 Portrait'}
+                          </span>
+                        </div>
                         
-                        {/* Slide Mockup Box representation */}
-                        <div className={`w-full ${layoutRatio} bg-white rounded-xl shadow-xs border border-[#F0EAE1] p-4 flex flex-col justify-between relative overflow-hidden`}>
+                        {/* Slide Mockup Box representation mimicking the clean reference images */}
+                        <div className={`w-full ${layoutRatio} bg-gradient-to-b from-[#e3f2fd]/50 via-[#f1f8e9]/60 to-[#c8e6c9]/80 rounded-2xl shadow-sm border border-white/90 p-3.5 flex flex-col justify-between relative overflow-hidden`}>
                           
-                          {/* Slide Header area */}
-                          <div className="border-b border-neutral-100/70 pb-1.5">
-                            <span className="text-[10px] font-bold text-forest-700 uppercase tracking-wider block">
-                              Slide Header Title
-                            </span>
-                            <p className="text-[11px] font-bold text-forest-950 truncate max-w-[90%]">
-                              {prompt.headerText}
-                            </p>
+                          {/* Decorative soft clouds in top sky */}
+                          <div className="absolute top-2 right-4 flex gap-1.5 opacity-60">
+                            <span className="w-5 h-2 bg-white rounded-full"></span>
+                            <span className="w-7 h-2.5 bg-white rounded-full -mt-0.5"></span>
                           </div>
 
-                          {/* Central illustration placeholder visual representation based on page type & visualStyle */}
-                          <div className="flex-1 my-3 bg-[#FAF6EE]/50 rounded-lg flex flex-col items-center justify-center p-3 text-center border border-dashed border-neutral-200 relative overflow-hidden">
-                            {/* Abstract decorative graphic depending on page title */}
-                            <div className="absolute inset-0 opacity-10 flex items-center justify-center">
-                              <BookOpen className="w-16 h-16 text-forest-900" />
+                          {/* Slide Top Bar */}
+                          <div className="flex items-center justify-between z-10">
+                            <span className="text-[9px] font-bold text-forest-900 bg-white/80 backdrop-blur-xs px-2 py-0.5 rounded-full shadow-2xs font-mono">
+                              Slide {index + 1} dari {results.length}
+                            </span>
+                            <span className="text-[9px] font-bold text-coral-600 bg-coral-50/90 px-2 py-0.5 rounded-full border border-coral-200/60 font-mono">
+                              {visualStyle.split('/')[0].trim()}
+                            </span>
+                          </div>
+
+                          {/* Central Content Area: Split layout with Mascot on Left and Clean Rounded Card on Right */}
+                          <div className="flex-1 my-2 grid grid-cols-12 gap-2 items-center z-10">
+                            
+                            {/* Left: Mascot Character Preview */}
+                            <div className="col-span-4 flex flex-col items-center justify-center text-center">
+                              {mascotType === 'custom' && mascotImage ? (
+                                <div className="relative">
+                                  <img 
+                                    src={mascotImage} 
+                                    alt="Foto Karakter" 
+                                    className="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-md ring-2 ring-forest-600/30" 
+                                  />
+                                  <span className="absolute -bottom-1 -right-1 bg-forest-900 text-white text-[8px] font-bold px-1 rounded-full">
+                                    Tutor
+                                  </span>
+                                </div>
+                              ) : mascotType === 'none' ? (
+                                <div className="w-12 h-12 rounded-2xl bg-white/70 border border-white flex items-center justify-center text-forest-800 text-lg shadow-2xs">
+                                  📊
+                                </div>
+                              ) : (
+                                <div className="w-14 h-14 rounded-2xl bg-white/80 border-2 border-white flex flex-col items-center justify-center shadow-md">
+                                  <span className="text-2xl">🎒</span>
+                                  <span className="text-[8px] font-bold text-forest-800">Tutor Cilik</span>
+                                </div>
+                              )}
+                              <span className="text-[9px] font-bold text-forest-950 mt-1 max-w-[85px] truncate">
+                                {mascotType === 'custom' ? (mascotImageName || customMascot || "Karakter Guru") : mascotType === 'none' ? "Konten Sains" : "Maskot Ramah"}
+                              </span>
                             </div>
 
-                            {prompt.pageTitle.toLowerCase().includes('navigasi') ? (
-                              <div className="flex flex-col gap-1.5 w-full max-w-[190px] z-10">
-                                <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-widest">PILIH JALUR</span>
-                                <div className="p-1.5 bg-forest-900 text-white rounded-lg text-[9px] font-bold text-center shadow-xs flex items-center justify-center gap-1">
-                                  <span>🎯</span> TUJUAN BELAJAR
-                                </div>
-                                <div className="p-1.5 bg-coral-600 text-white rounded-lg text-[9px] font-bold text-center shadow-xs flex items-center justify-center gap-1">
-                                  <span>🎮</span> KUIS INTERAKTIF
-                                </div>
+                            {/* Right: Clean White Rounded Content Card with Generous Whitespace */}
+                            <div className="col-span-8 bg-white/95 backdrop-blur-xs rounded-xl shadow-xs border border-white p-2.5 flex flex-col justify-between min-h-[90px]">
+                              
+                              <div className="border-b border-neutral-100 pb-1">
+                                <p className="text-[10px] font-bold text-forest-950 leading-tight truncate">
+                                  {prompt.headerText}
+                                </p>
                               </div>
-                            ) : prompt.pageTitle.toLowerCase().includes('peta') || prompt.pageTitle.toLowerCase().includes('perjalanan') ? (
-                              <div className="flex flex-col items-center gap-1.5 z-10">
-                                <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-widest">4 TITIK MISI KUIS</span>
-                                <div className="flex items-center gap-1.5">
-                                  {[1, 2, 3, 4].map(n => (
-                                    <div key={n} className="flex items-center">
-                                      <span className="w-6 h-6 rounded-full bg-forest-900 text-white text-[9px] font-bold flex items-center justify-center shadow-xs">
+
+                              {/* Card Body depending on slide type */}
+                              <div className="my-1.5">
+                                {prompt.pageTitle.toLowerCase().includes('navigasi') ? (
+                                  <div className="flex flex-col gap-1">
+                                    <div className="py-1 px-1.5 bg-forest-900 text-white rounded-md text-[8px] font-bold flex items-center justify-center gap-1 shadow-2xs">
+                                      <span>🎯</span> TUJUAN BELAJAR
+                                    </div>
+                                    <div className="py-1 px-1.5 bg-coral-600 text-white rounded-md text-[8px] font-bold flex items-center justify-center gap-1 shadow-2xs">
+                                      <span>🎮</span> KUIS INTERAKTIF
+                                    </div>
+                                  </div>
+                                ) : prompt.pageTitle.toLowerCase().includes('peta') ? (
+                                  <div className="flex items-center justify-center gap-1 py-1">
+                                    {[1, 2, 3, 4].map(n => (
+                                      <span key={n} className="w-5 h-5 rounded-full bg-forest-900 text-white text-[8px] font-bold flex items-center justify-center shadow-2xs">
                                         {n}
                                       </span>
-                                      {n < 4 && <span className="w-2 h-0.5 bg-neutral-300"></span>}
+                                    ))}
+                                  </div>
+                                ) : prompt.pageTitle.toLowerCase().includes('respon benar') ? (
+                                  <div className="flex flex-col items-center text-center">
+                                    <span className="text-xs">⭐⭐⭐</span>
+                                    <span className="text-[8px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded-full mt-0.5">
+                                      JAWABAN BENAR!
+                                    </span>
+                                  </div>
+                                ) : prompt.pageTitle.toLowerCase().includes('respon salah') ? (
+                                  <div className="flex flex-col items-center text-center">
+                                    <span className="text-xs">💡</span>
+                                    <span className="text-[8px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded-full mt-0.5">
+                                      AYO COBA LAGI!
+                                    </span>
+                                  </div>
+                                ) : prompt.quizData ? (
+                                  <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-1 text-[8px] text-neutral-600 bg-neutral-50 px-1 py-0.5 rounded border border-neutral-100">
+                                      <span className="w-3 h-3 rounded-full bg-coral-500 text-white flex items-center justify-center text-[7px] font-bold shrink-0">A</span>
+                                      <span className="truncate">{prompt.quizData.options[0]?.replace(/^[A-D]\.\s*/, '')}</span>
                                     </div>
-                                  ))}
-                                </div>
+                                    <div className="flex items-center gap-1 text-[8px] text-neutral-600 bg-neutral-50 px-1 py-0.5 rounded border border-neutral-100">
+                                      <span className="w-3 h-3 rounded-full bg-forest-700 text-white flex items-center justify-center text-[7px] font-bold shrink-0">B</span>
+                                      <span className="truncate">{prompt.quizData.options[1]?.replace(/^[A-D]\.\s*/, '')}</span>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex flex-col gap-0.5">
+                                    <div className="h-1.5 bg-neutral-100 rounded-full w-4/5"></div>
+                                    <div className="h-1.5 bg-neutral-100 rounded-full w-2/3"></div>
+                                    <div className="h-1.5 bg-neutral-100 rounded-full w-1/2"></div>
+                                  </div>
+                                )}
                               </div>
-                            ) : prompt.pageTitle.toLowerCase().includes('respon benar') ? (
-                              <div className="flex flex-col items-center gap-1 z-10 text-center">
-                                <div className="flex gap-0.5 text-base text-yellow-400">⭐⭐⭐</div>
-                                <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-full font-mono uppercase">
-                                  🎉 JAWABAN BENAR!
-                                </span>
+
+                              <div className="flex items-center justify-between text-[8px] text-neutral-400 font-mono pt-1 border-t border-neutral-100/60">
+                                <span>{prompt.estimatedTime}</span>
+                                <span className="text-forest-700 font-semibold">Tampilan Bersih</span>
                               </div>
-                            ) : prompt.pageTitle.toLowerCase().includes('respon salah') ? (
-                              <div className="flex flex-col items-center gap-1 z-10 text-center">
-                                <span className="text-xl">💡</span>
-                                <span className="text-[9px] font-bold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full font-mono uppercase">
-                                  AYO COBA LAGI!
-                                </span>
-                              </div>
-                            ) : (
-                              <>
-                                <span className="text-[9px] font-bold text-coral-600 font-mono uppercase bg-coral-50 px-1.5 py-0.5 rounded-sm z-10">
-                                  {visualStyle.split('/')[0].trim()}
-                                </span>
-                                <p className="text-[9px] text-neutral-500 mt-1 max-w-[180px] leading-tight truncate-3 z-10">
-                                  {topic} visual background
-                                </p>
-                              </>
-                            )}
+                            </div>
                           </div>
 
-                          {/* Footer area */}
-                          <div className="flex items-center justify-between border-t border-neutral-100 pt-1.5">
-                            <span className="text-[9px] text-neutral-400 font-mono">{prompt.estimatedTime}</span>
-                            <div className="flex gap-1">
-                              <span className="px-2 py-0.5 bg-coral-600 text-white rounded text-[8px] font-bold">
-                                {prompt.navigationButtons.split(',')[0].trim()}
-                              </span>
+                          {/* Slide Bottom Action Pill Button */}
+                          <div className="flex items-center justify-end z-10 pt-1">
+                            <div className="px-3 py-1 bg-gradient-to-r from-coral-500 to-coral-600 text-white text-[9px] font-bold rounded-full shadow-xs flex items-center gap-1">
+                              <span>▶</span> {prompt.navigationButtons.split(',')[0].trim()}
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Right Grid: Formatted Prompt Output */}
+                    {/* Right Grid: Formatted Clean Prompt Output */}
                     <div className="lg:col-span-7 p-6 md:p-8 flex flex-col gap-4">
-                      <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                      
+                      {/* Card Header & Controls */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 pb-3">
                         <div>
-                          <h3 className="text-sm font-bold text-forest-900 font-display">{prompt.pageTitle}</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-bold text-forest-900 font-display">{prompt.pageTitle}</h3>
+                            <span className="text-[10px] bg-amber-100 text-amber-900 font-bold px-2 py-0.2 rounded-full font-mono">
+                              Clean UI
+                            </span>
+                          </div>
                           <span className="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md font-semibold mt-1 inline-block">
                             Tujuan: {prompt.educationalObjective}
                           </span>
                         </div>
-                        
-                        <button
-                          onClick={() => copyToClipboard(prompt.illustrationDesc, index)}
-                          className="px-3 py-1.5 bg-neutral-50 hover:bg-neutral-100 text-forest-900 text-xs font-bold rounded-lg border border-neutral-200 transition-colors cursor-pointer flex items-center gap-1 hover:border-forest-700/30"
-                        >
-                          {copiedIndex === index ? (
-                            <>
-                              <Check className="w-3.5 h-3.5 text-green-600 animate-bounce" />
-                              <span className="text-green-600">Copied!</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3.5 h-3.5" />
-                              <span>Copy Prompt</span>
-                            </>
-                          )}
-                        </button>
+
+                        {/* Card format buttons */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <div className="flex p-0.5 bg-neutral-100 rounded-lg">
+                            <button
+                              type="button"
+                              onClick={() => setCardViewModes(prev => ({ ...prev, [index]: 'clean' }))}
+                              className={`px-2 py-1 text-[10px] font-bold rounded-md cursor-pointer transition-all ${
+                                currentCardMode === 'clean' ? 'bg-white text-forest-900 shadow-2xs' : 'text-neutral-500 hover:text-forest-900'
+                              }`}
+                            >
+                              ⚡ Bersih
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCardViewModes(prev => ({ ...prev, [index]: 'midjourney' }))}
+                              className={`px-2 py-1 text-[10px] font-bold rounded-md cursor-pointer transition-all ${
+                                currentCardMode === 'midjourney' ? 'bg-white text-forest-900 shadow-2xs' : 'text-neutral-500 hover:text-forest-900'
+                              }`}
+                            >
+                              🎨 Midjourney
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCardViewModes(prev => ({ ...prev, [index]: 'spec' }))}
+                              className={`px-2 py-1 text-[10px] font-bold rounded-md cursor-pointer transition-all ${
+                                currentCardMode === 'spec' ? 'bg-white text-forest-900 shadow-2xs' : 'text-neutral-500 hover:text-forest-900'
+                              }`}
+                            >
+                              📋 Spesifikasi
+                            </button>
+                          </div>
+
+                          <button
+                            onClick={() => copyToClipboard(textToCopy, index)}
+                            className="px-3 py-1.5 bg-forest-900 hover:bg-forest-800 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
+                          >
+                            {copiedIndex === index ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-green-300 animate-bounce" />
+                                <span className="text-green-300">Tersalin!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5" />
+                                <span>Salin</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
 
-                      {/* Prompt code block style */}
-                      <div className="bg-[#FAF6EE] text-forest-950 font-mono text-[11px] p-4 rounded-2xl border border-[#F2EDE2] overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner max-h-[220px] overflow-y-auto">
-                        {prompt.illustrationDesc}
+                      {/* Prompt Output Code Block */}
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center justify-between text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-wider">
+                          <span>
+                            {currentCardMode === 'clean' 
+                              ? '⚡ Teks Prompt AI Murni (Siap Generate di Canva Magic Media / Midjourney)' 
+                              : currentCardMode === 'midjourney' 
+                                ? '🎨 Midjourney Command dengan Parameter Rasio' 
+                                : '📋 Panduan Komposisi Desain Manual (Bahasa Indonesia)'}
+                          </span>
+                          <span className="text-coral-600 font-semibold normal-case">
+                            {currentCardMode === 'clean' ? '✨ Bebas Label Form' : ''}
+                          </span>
+                        </div>
+
+                        <div className="bg-[#FAF6EE] text-forest-950 font-mono text-[11px] p-4 rounded-2xl border border-[#F2EDE2] overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner max-h-[220px] overflow-y-auto">
+                          {textToCopy}
+                        </div>
                       </div>
 
                       {/* Canva Search Keywords Tag */}
@@ -2281,10 +2632,10 @@ Atmosphere: Bright, cozy, friendly lighting, balanced composition with generous 
                         </div>
                       )}
 
-                      {/* Educational Tips */}
-                      <div className="flex gap-2 items-center text-[11px] text-neutral-500">
+                      {/* Educational Guidance */}
+                      <div className="flex gap-2 items-center text-[11px] text-neutral-500 bg-neutral-50/80 p-2.5 rounded-xl border border-neutral-100">
                         <Info className="w-3.5 h-3.5 text-coral-600 shrink-0" />
-                        <span><strong>Petunjuk Canva:</strong> Tempel prompt di atas pada Magic Media Canva, masukkan rasio {layout === 'landscape' ? '16:9 (Horizontal)' : '9:16 (Vertical)'}.</span>
+                        <span><strong>Petunjuk Penggunaan:</strong> Tempelkan prompt bersih di atas ke <strong>Canva Magic Media</strong> (Pilih rasio {layout === 'landscape' ? '16:9 Landscape' : '9:16 Portrait'}) atau <strong>Midjourney / DALL-E</strong> untuk hasil yang rapi dan elegan.</span>
                       </div>
 
                       {/* Interactive Playable Quiz Card */}

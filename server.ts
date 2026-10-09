@@ -75,7 +75,7 @@ app.get('/api/api-status', (req: express.Request, res: express.Response) => {
 
 // API endpoint for generating prompts using Gemini 3.8 Flash (with 3.1 Flash Lite fallback)
 app.post('/api/generate-prompts', async (req: express.Request, res: express.Response) => {
-  const { topic, ageGroup, pages, layout, visualStyle, language, mascot } = req.body;
+  const { topic, ageGroup, pages, layout, visualStyle, detailLevel, language, mascot } = req.body;
 
   if (!topic || !ageGroup || !pages || !Array.isArray(pages)) {
     return res.status(400).json({ error: 'Data input tidak lengkap. Harap isi topik, target usia, dan daftar halaman.' });
@@ -90,61 +90,66 @@ app.post('/api/generate-prompts', async (req: express.Request, res: express.Resp
   try {
     const pageListStr = pages.map((p: string, i: number) => `Halaman ${i + 1}: ${p}`).join('\n');
     const mascotText = mascot.type === 'none' 
-      ? 'Tanpa Maskot' 
+      ? 'Tanpa Maskot (Fokus murni diagram edukatif bersih)' 
       : mascot.type === 'custom' && mascot.imageName
         ? `Karakter Kustom Berdasarkan Foto Unggahan Guru ("${mascot.imageName}"). Deskripsi: ${mascot.description || 'Karakter pendamping tutor ramah yang konsisten dengan foto referensi'}. Pastikan konsistensi ciri visual karakter di setiap slide.`
-        : `Jenis Maskot: ${mascot.type}. Deskripsi Maskot: ${mascot.description || 'Karakter pendamping edukatif yang lucu dan relevan dengan topik.'}`;
+        : `Jenis Maskot: ${mascot.type}. Deskripsi Maskot: ${mascot.description || 'Karakter pendamping edukatif yang lucu dan ramah (tutor cilik/hewan pintar/guru kartun).'}`;
 
-    const systemInstruction = `Anda adalah seorang ahli Instruksional Desain, Pengembang Media Pembelajaran Interaktif, dan Prompt Engineer senior.
-Tugas Anda adalah merancang teks prompt visual premium secara step-by-step untuk membantu guru membuat materi pembelajaran interaktif yang menakjubkan.
+    const effectiveDetail = detailLevel || 'clean-minimalis';
+
+    const systemInstruction = `Anda adalah Senior Educational UI/UX Designer, Instructional Designer, dan AI Image Prompt Engineer terkemuka.
+Tugas Anda adalah merancang teks prompt gambar (AI Image Prompt) yang SANGAT BERSIH (ULTRA-CLEAN), RAPI, dan PROFESIONAL seperti slide media pembelajaran interaktif modern (layout 16:9 landscape atau 9:16 portrait).
 
 Input Desain:
 - Topik: "${topic}"
 - Target Usia Siswa: ${ageGroup}
-- Struktur Halaman yang diinginkan:
+- Struktur Halaman yang diminta:
 ${pageListStr}
-- Tata Letak Slide: ${layout === 'portrait' ? '9:16 (Portrait)' : '16:9 (Landscape)'}
+- Tata Letak: ${layout === 'portrait' ? '9:16 (Portrait)' : '16:9 (Landscape)'}
 - Gaya Visual & Estetika: ${visualStyle}
-- Bahasa Narasi Utama: ${language}
-- Strategi Maskot: ${mascotText}
+- Tingkat Detail Visual: ${effectiveDetail === 'clean-minimalis' ? 'Clean Minimalis (Latar sederhana, sedikit ornamen, ikon jelas, kartu rounded bersih, whitespace lega, fokus pada keterbacaan)' : effectiveDetail === '3d-premium' ? '3D Premium (Karakter 3D berkilau, pencahayaan lembut studio, kartu translucent modern)' : effectiveDetail === '3d-detail-tinggi' ? '3D Detail Tinggi (Tekstur terperinci, karakter ekspresif, tetap rapi)' : 'Adaptif Otomatis'}
+- Bahasa Pengantar: ${language}
+- Karakter/Maskot: ${mascotText}
 
-PENTING - STANDAR 13 HALAMAN INTERAKTIF EDUSMART LAB:
-Perhatikan karakteristik spesifik halaman berikut jika muncul dalam daftar:
-1. Cover: Judul utama topik dengan visual megah menarik, latar lingkungan hidup, dan tombol MULAI.
-2. Navigasi: Menu pilihan bercabang interaktif menampilkan 2 tombol utama: "🎯 Tujuan Pembelajaran" dan "🎮 Kuis Interaktif".
-3. Tujuan Pembelajaran: Tiga poin capaian kompetensi dengan ikon bendera/lentera menyala.
-4. Apersepsi: Pemantik rasa ingin tahu (peti misteri, portal kristal, atau pertanyaan pemantik).
-5. Peta Perjalanan Kuis: Peta petualangan visual (Treasure Quest Map) berisi 4 titik checkpoint kuis (Titik 1, 2, 3, dan 4).
-6-9. Kuis 1 s/d Kuis 4: Pertanyaan kuis nyata pilihan ganda (A, B, C, D) yang mendidik dan relevan dengan topik, WAJIB sertakan objek 'quizData'.
-10. Respon Benar: Layar selebrasi sukacita, 3 bintang emas berkilau, pita "Jawaban Benar / Hebat!", konfeti, tombol "Lanjut ke Tantangan Berikutnya".
-11. Respon Salah: Layar motivasi bersahabat, maskot memberi semangat "Ayo Coba Lagi!", balon kata petunjuk, tombol "Ulangi Soal" & "Lihat Petunjuk".
-12. Rangkuman / Summary: Papan rangkuman intisari konsep materi yang rapi dan mudah dihafal.
-13. Penutup: Layar penutup ceria, ucapan selamat telah menyelesaikan misi, dan tombol "Selesai / Keluar".
+STANDAR KOMPOSISI VISUAL BERSIH (SESUAI GAMBAR CONTOH / USER REFERENCE):
+1. CLEAN PROMPT (Teks Prompt Bahasa Inggris Murni Tanpa Label Form):
+   - WAJIB dalam bahasa Inggris yang mengalir alami dan siap langsung ditempel ke Canva Magic Media, Midjourney v6, DALL-E 3, atau Imagen 3.
+   - DILARANG menyertakan label form administratif seperti "Ukuran:", "Style:", "Background Environment:", "Center Subject / Graphic:", "Header Text:", dsb. karena label teks tersebut akan merusak hasil generator AI dan membuat gambar menjadi acak-acakan.
+   - Komposisi wajib mengikuti prinsip UI slide presentasi bersih:
+     * Rasio: ${layout === 'portrait' ? '9:16 portrait ratio' : '16:9 landscape ratio'}
+     * Karakter pendamping: di sisi kiri atau sudut, berpose ramah, tersenyum, menyapa atau menunjuk ke arah materi.
+     * Kartu konten utama: kartu putih bersih dengan sudut melengkung lembut (large clean white rounded card container, subtle soft drop shadow) dengan whitespace/ruang kosong yang lapang.
+     * Latar pemandangan/lingkungan: latar lembut yang tenang (seperti perbukitan hijau kartun lembut, langit cerah dengan awan 3D clay halus, dan sentuhan elemen sesuai topik "${topic}").
+     * Tombol interaktif: tombol taktil melengkung mengilap di bagian bawah (glossy rounded action button).
+     * Estetika: uncluttered, minimalist composition, ample negative space, high legibility, soft studio ambient lighting, 8k resolution, UI/UX educational presentation slide mockup.
 
-Struktur Teks Prompt Visual (illustrationDesc):
-"Ukuran: ${layout === 'portrait' ? '9:16 (Portrait)' : '16:9 (Landscape)'}
-Style: ${visualStyle}
-Background Environment: Lingkungan visual yang mendalam dan hidup merepresentasikan topik "${topic}".
-Center Subject / Graphic: Objek visual utama slide [Teks Header] dengan penataan bersih, whitespace proporsional, tanpa elemen terpotong.
-Integrated Mascots & Details: Maskot tutor ramah yang berinteraksi secara aktif.
-UI Elements & Navigation: Tombol interaktif dan penanda slide yang jelas.
-Canva Search Keywords: Kata kunci pencarian elemen grafis di Canva.
-Atmosphere: Pencahayaan hangat, seimbang, 8K resolution, 300 dpi, highly detailed."
+2. MIDJOURNEY PROMPT:
+   - Teks cleanPrompt yang diakhiri parameter rasio: "--ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw"
+
+3. DESKRIPSI SPESIFIKASI MANUAL (illustrationDesc):
+   - Panduan bahasa Indonesia terstruktur yang rapi untuk guru yang ingin merakit slide secara manual di Canva atau PowerPoint:
+     Layout: ... | Karakter: ... | Kartu Konten: ... | Tombol: ... | Palet Warna: ...
+
+4. QUIZ DATA:
+   - Jika halaman adalah kuis (Kuis 1-4), sertakan soal pilihan ganda relevan lengkap dengan 4 opsi, kunci jawaban (A/B/C/D), dan penjelasan mendidik.
 
 Kembalikan dalam struktur JSON ARRAY objek:
 - pageTitle (string)
 - headerText (string)
-- illustrationDesc (string)
-- canvaKeywords (string: 3-5 kata kunci pencarian Canva dalam bahasa Inggris)
+- cleanPrompt (string: prompt bahasa Inggris murni siap paste ke AI image generator)
+- midjourneyPrompt (string: cleanPrompt + parameter Midjourney)
+- illustrationDesc (string: panduan spesifikasi tata letak manual bahasa Indonesia)
+- canvaKeywords (string: 3-5 kata kunci pencarian Canva bahasa Inggris)
 - navigationButtons (string)
 - estimatedTime (string)
 - educationalObjective (string)
-- quizData (objek kuis jika halaman bertema kuis: question, options [4 items], correctAnswer [A/B/C/D], explanation)`;
+- quizData (opsional: objek kuis pilihan ganda)`;
 
-    const contents = `Tolong buatkan visual prompt terstruktur premium untuk media pembelajaran "${topic}".
+    const contents = `Tolong buatkan visual prompt ultra-clean siap pakai untuk media pembelajaran "${topic}".
 Daftar halaman:
 ${pageListStr}
 
+Pastikan teks cleanPrompt sangat bersih dan menghasilkan estetika presentasi slide UI dengan whitespace lega dan kartu rounded rapi.
 Harap berikan respons dalam bentuk JSON Array valid.`;
 
     const { response, usedModel } = await callGeminiWithFallback(ai, {
@@ -159,7 +164,9 @@ Harap berikan respons dalam bentuk JSON Array valid.`;
             properties: {
               pageTitle: { type: Type.STRING },
               headerText: { type: Type.STRING },
-              illustrationDesc: { type: Type.STRING },
+              cleanPrompt: { type: Type.STRING, description: "Prompt bahasa Inggris murni ultra-clean siap pakai untuk Canva AI / Midjourney / DALL-E" },
+              midjourneyPrompt: { type: Type.STRING, description: "Prompt Midjourney lengkap dengan flag parameter" },
+              illustrationDesc: { type: Type.STRING, description: "Panduan spesifikasi layout terstruktur bahasa Indonesia" },
               canvaKeywords: { type: Type.STRING, description: "Kata kunci pencarian aset di Canva" },
               navigationButtons: { type: Type.STRING },
               estimatedTime: { type: Type.STRING },
@@ -179,7 +186,7 @@ Harap berikan respons dalam bentuk JSON Array valid.`;
                 required: ["question", "options", "correctAnswer", "explanation"]
               }
             },
-            required: ["pageTitle", "headerText", "illustrationDesc", "navigationButtons", "estimatedTime", "educationalObjective"]
+            required: ["pageTitle", "headerText", "cleanPrompt", "illustrationDesc", "navigationButtons", "estimatedTime", "educationalObjective"]
           }
         }
       }
