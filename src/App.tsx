@@ -62,64 +62,128 @@ export const STANDARD_13_PAGES = [
   "13. Penutup"
 ];
 
-// Pre-defined topics for teachers to click and pre-fill
+export const SUBJECT_OPTIONS = [
+  { id: "IPAS / Sains", name: "IPAS / IPA (Sains & Alam)", icon: "🔬", defaultTopic: "Ekosistem & Rantai Makanan", defaultObj: "Menganalisis rantai makanan dan interaksi antar komponen biotik dalam ekosistem.", defaultAge: "SD Kelas Tinggi (9-11 tahun)" },
+  { id: "Matematika", name: "Matematika", icon: "📐", defaultTopic: "Pecahan Senilai & Bangun Geometri", defaultObj: "Memvisualisasikan konsep pecahan senilai dan mengenali sifat simetri bangun datar.", defaultAge: "SD Kelas Rendah (6-8 tahun)" },
+  { id: "Bahasa Indonesia", name: "Bahasa Indonesia", icon: "📖", defaultTopic: "Literasi Cerita & Menemukan Ide Pokok", defaultObj: "Menemukan ide pokok dalam paragraf naratif dan mengidentifikasi karakter tokoh cerita.", defaultAge: "SD Kelas Tinggi (9-11 tahun)" },
+  { id: "IPS / Sejarah", name: "IPS / Sejarah / Geografi", icon: "🗺️", defaultTopic: "Keragaman Budaya & Suku Nusantara", defaultObj: "Menghargai keberagaman suku bangsa, rumah adat, dan pakaian tradisional nusantara.", defaultAge: "SD Kelas Tinggi (9-11 tahun)" },
+  { id: "PAI & Budi Pekerti", name: "PAI & Budi Pekerti", icon: "🕌", defaultTopic: "Akhlak Terpuji & Sikap Teladan", defaultObj: "Meneladani sikap jujur, disiplin, dan tolong-menolong dalam kehidupan sehari-hari.", defaultAge: "SD Kelas Rendah (6-8 tahun)" },
+  { id: "Bahasa Inggris", name: "Bahasa Inggris (English)", icon: "🗣️", defaultTopic: "Daily Activities & Action Verbs", defaultObj: "Mengenal kosakata aktivitas harian dan menyusun kalimat sederhana present tense.", defaultAge: "SMP (12-14 tahun)" },
+  { id: "TK / PAUD", name: "TK / PAUD (Tematik Terpadu)", icon: "🎒", defaultTopic: "Mengenal Hewan & Suaranya", defaultObj: "Mengenali bentuk, suara, dan warna hewan sekitar secara ramah dan ceria.", defaultAge: "PAUD (3-5 tahun)" },
+  { id: "Informatika / TIK", name: "Informatika / TIK", icon: "💻", defaultTopic: "Pengenalan Komputer & Algoritma", defaultObj: "Memahami perangkat keras komputer dan konsep dasar logika komputasi terstruktur.", defaultAge: "SMP (12-14 tahun)" },
+  { id: "PPKn / Pancasila", name: "Pendidikan Pancasila / PPKn", icon: "🇮🇩", defaultTopic: "Nilai Pancasila & Gotong Royong", defaultObj: "Mengamalkan nilai-nilai luhur Pancasila dalam lingkungan sekolah dan masyarakat.", defaultAge: "SD Kelas Tinggi (9-11 tahun)" },
+  { id: "Seni Budaya", name: "Seni Budaya & Keterampilan", icon: "🎨", defaultTopic: "Harmoni Warna & Motif Tradisional", defaultObj: "Mengeksplorasi perpaduan warna dan ragam hias motif pola batik nusantara.", defaultAge: "SD Kelas Rendah (6-8 tahun)" },
+  { id: "Lainnya", name: "Mata Pelajaran Lainnya", icon: "✨", defaultTopic: "", defaultObj: "", defaultAge: "SD Kelas Tinggi (9-11 tahun)" }
+];
+
+// Pre-defined topics across various subjects
 const PRESET_TOPICS = [
   { 
+    subject: "IPAS / Sains",
     title: "Ekosistem & Rantai Makanan", 
     age: "SD Kelas Tinggi (9-11 tahun)", 
+    objective: "Menganalisis hubungan makan dan dimakan antar komponen biotik dalam ekosistem.",
     pages: STANDARD_13_PAGES 
   },
   { 
-    title: "Siklus Air & Hujan", 
-    age: "SD Kelas Tinggi (9-11 tahun)", 
-    pages: [
-      "1. Cover",
-      "2. Navigasi (Tujuan Pembelajaran, Kuis)",
-      "3. Tujuan Pembelajaran",
-      "4. Apersepsi",
-      "5. Peta Perjalanan Kuis (4 titik kuis)",
-      "6. Kuis 1: Dari mana uap air terbentuk?",
-      "7. Kuis 2: Mengapa awan bisa menurunkan hujan?",
-      "8. Kuis 3: Ke mana air hujan meresap?",
-      "9. Kuis 4: Apakah jumlah air di bumi berubah?",
-      "10. Respon Benar",
-      "11. Respon Salah",
-      "12. Rangkuman/Summary",
-      "13. Penutup"
-    ] 
-  },
-  { 
-    title: "Tata Surya & Planet", 
-    age: "SMP (12-14 tahun)", 
-    pages: [
-      "1. Cover",
-      "2. Navigasi (Tujuan Pembelajaran, Kuis)",
-      "3. Tujuan Pembelajaran",
-      "4. Apersepsi",
-      "5. Peta Perjalanan Kuis (4 titik kuis)",
-      "6. Kuis 1: Pusat tata surya kita?",
-      "7. Kuis 2: Planet terbesar tata surya?",
-      "8. Kuis 3: Mengapa Mars berwarna merah?",
-      "9. Kuis 4: Planet dengan cincin terindah?",
-      "10. Respon Benar",
-      "11. Respon Salah",
-      "12. Rangkuman/Summary",
-      "13. Penutup"
-    ] 
-  },
-  { 
-    title: "Metamorfosis Sempurna Kupu-Kupu", 
+    subject: "Matematika",
+    title: "Pecahan Senilai & Bangun Datar", 
     age: "SD Kelas Rendah (6-8 tahun)", 
+    objective: "Memahami pecahan 1/2, 1/4 melalui potongan visual dan mengenali bangun geometri datar.",
     pages: [
       "1. Cover",
       "2. Navigasi (Tujuan Pembelajaran, Kuis)",
       "3. Tujuan Pembelajaran",
       "4. Apersepsi",
       "5. Peta Perjalanan Kuis (4 titik kuis)",
-      "6. Kuis 1: Tahap pertama setelah telur?",
-      "7. Kuis 2: Tempat ulat membungkus diri?",
-      "8. Kuis 3: Makanan ulat sebelum tidur?",
-      "9. Kuis 4: Bentuk akhir metamorfosis?",
+      "6. Kuis 1: Berapa bagian pizza yang diwarnai?",
+      "7. Kuis 2: Bangun datar dengan 4 sisi sama panjang?",
+      "8. Kuis 3: Nilai pecahan 2/4 sama besar dengan apa?",
+      "9. Kuis 4: Benda di kelas berbentuk lingkaran?",
+      "10. Respon Benar",
+      "11. Respon Salah",
+      "12. Rangkuman/Summary",
+      "13. Penutup"
+    ] 
+  },
+  { 
+    subject: "Bahasa Indonesia",
+    title: "Literasi Membaca: Cerita Fabel", 
+    age: "SD Kelas Tinggi (9-11 tahun)", 
+    objective: "Menemukan ide pokok dalam kutipan fabel dan meneladani pesan moralnya.",
+    pages: [
+      "1. Cover",
+      "2. Navigasi (Tujuan Pembelajaran, Kuis)",
+      "3. Tujuan Pembelajaran",
+      "4. Apersepsi",
+      "5. Peta Perjalanan Kuis (4 titik kuis)",
+      "6. Kuis 1: Di mana latar tempat terjadinya cerita?",
+      "7. Kuis 2: Siapa tokoh utama fabel tersebut?",
+      "8. Kuis 3: Apa watak kancil dalam cerita?",
+      "9. Kuis 4: Apa amanat moral yang bisa kita ambil?",
+      "10. Respon Benar",
+      "11. Respon Salah",
+      "12. Rangkuman/Summary",
+      "13. Penutup"
+    ] 
+  },
+  { 
+    subject: "IPAS / Sains",
+    title: "Tata Surya & Karakteristik Planet", 
+    age: "SMP (12-14 tahun)", 
+    objective: "Menganalisis susunan tata surya dan karakteristik fisik planet-planet pengitari matahari.",
+    pages: [
+      "1. Cover",
+      "2. Navigasi (Tujuan Pembelajaran, Kuis)",
+      "3. Tujuan Pembelajaran",
+      "4. Apersepsi",
+      "5. Peta Perjalanan Kuis (4 titik kuis)",
+      "6. Kuis 1: Pusat gravitasi tata surya kita?",
+      "7. Kuis 2: Planet terbesar dengan bintik merah raksasa?",
+      "8. Kuis 3: Mengapa Mars berwarna kemerahan?",
+      "9. Kuis 4: Planet dengan sistem cincin es terindah?",
+      "10. Respon Benar",
+      "11. Respon Salah",
+      "12. Rangkuman/Summary",
+      "13. Penutup"
+    ] 
+  },
+  { 
+    subject: "IPS / Sejarah",
+    title: "Keragaman Suku & Budaya Nusantara", 
+    age: "SD Kelas Tinggi (9-11 tahun)", 
+    objective: "Mengenal rumah adat, pakaian tradisional, dan semboyan pemersatu bangsa.",
+    pages: [
+      "1. Cover",
+      "2. Navigasi (Tujuan Pembelajaran, Kuis)",
+      "3. Tujuan Pembelajaran",
+      "4. Apersepsi",
+      "5. Peta Perjalanan Kuis (4 titik kuis)",
+      "6. Kuis 1: Rumah adat Tongkonan dari daerah mana?",
+      "7. Kuis 2: Alat musik tradisional Sasando dari mana?",
+      "8. Kuis 3: Arti semboyan Bhinneka Tunggal Ika?",
+      "9. Kuis 4: Kain tenun Ulos adalah ciri khas suku apa?",
+      "10. Respon Benar",
+      "11. Respon Salah",
+      "12. Rangkuman/Summary",
+      "13. Penutup"
+    ] 
+  },
+  { 
+    subject: "TK / PAUD",
+    title: "Mengenal Hewan & Suaranya", 
+    age: "PAUD (3-5 tahun)", 
+    objective: "Mengenali rupa hewan peliharaan, suara khasnya, dan makanannya secara ceria.",
+    pages: [
+      "1. Cover",
+      "2. Navigasi (Tujuan Pembelajaran, Kuis)",
+      "3. Tujuan Pembelajaran",
+      "4. Apersepsi",
+      "5. Peta Perjalanan Kuis (4 titik kuis)",
+      "6. Kuis 1: Hewan lucu berbulu yang bersuara 'meong'?",
+      "7. Kuis 2: Siapa yang suka wortel dan melompat lincah?",
+      "8. Kuis 3: Hewan bertubuh besar dengan belalai panjang?",
+      "9. Kuis 4: Burung berleher panjang yang suka berenang?",
       "10. Respon Benar",
       "11. Respon Salah",
       "12. Rangkuman/Summary",
@@ -327,11 +391,73 @@ declare global {
   }
 }
 
+// Helper to determine clean adaptive theme based on subject & topic
+function getAdaptiveSubjectTheme(subject: string = '', topic: string = '') {
+  const text = `${subject} ${topic}`.toLowerCase();
+  if (text.includes('matematika') || text.includes('math') || text.includes('hitung') || text.includes('aljabar') || text.includes('geometri') || text.includes('pecahan')) {
+    return {
+      bg: "clean minimalist backdrop with subtle pale geometric grid lines and soft neutral slate tint",
+      elements: "crisp geometric shapes, mathematical symbols (+, -, ×, ÷), neatly formatted formulas, and clean coordinate diagrams",
+      palette: "slate navy, soft cobalt blue, and clean white with subtle warm amber accents",
+      canvaKeywords: "math education, clean geometry, minimalist mathematics, vector math icons"
+    };
+  }
+  if (text.includes('bahasa') || text.includes('literasi') || text.includes('indonesia') || text.includes('english') || text.includes('inggris') || text.includes('puisi') || text.includes('cerita')) {
+    return {
+      bg: "clean contemporary educational backdrop with soft beige-to-cream subtle gradient and warm study nook aesthetic",
+      elements: "clean open book icon, readable typography cards, and crisp speech dialogue bubbles",
+      palette: "warm terracotta, soft ivory, navy, and muted sage green",
+      canvaKeywords: "reading literacy, clean book illustration, language education, minimalist classroom"
+    };
+  }
+  if (text.includes('ips') || text.includes('sejarah') || text.includes('geografi') || text.includes('sosial') || text.includes('peta') || text.includes('budaya')) {
+    return {
+      bg: "clean minimalist backdrop with subtle pale topographic map lines and warm neutral tones",
+      elements: "clean stylized thematic map, navigational compass icon, and cultural heritage infographic cards",
+      palette: "warm sand, olive, deep indigo, and burnt orange",
+      canvaKeywords: "social studies, clean geography map, history infographic, cultural heritage"
+    };
+  }
+  if (text.includes('pai') || text.includes('agama') || text.includes('moral') || text.includes('akhlak')) {
+    return {
+      bg: "serene peaceful backdrop with soft subtle mint-teal gradient and clean architectural arch lines",
+      elements: "neatly arranged values chart, book stand motif, and calm educational symbols",
+      palette: "emerald green, warm gold, clean white, and soft teal",
+      canvaKeywords: "islamic education, serene clean background, moral values, peaceful classroom"
+    };
+  }
+  if (text.includes('informatika') || text.includes('komputer') || text.includes('coding') || text.includes('tik') || text.includes('teknologi')) {
+    return {
+      bg: "clean modern tech backdrop with subtle pale cyan gradient and minimalist circuit node lines",
+      elements: "stylized clean monitor card, binary flow diagram, and crisp digital UI elements",
+      palette: "clean slate, electric cyan, white, and deep charcoal",
+      canvaKeywords: "computer science, coding education, tech UI, clean infographic"
+    };
+  }
+  if (text.includes('paud') || text.includes('tk') || text.includes('balita')) {
+    return {
+      bg: "clean cheerful soft pastel gradient with very simple rounded cloud shapes and ample negative space",
+      elements: "large concrete friendly shapes, colorful alphabet blocks, and high contrast items",
+      palette: "soft butter yellow, sky blue, peach, and crisp white",
+      canvaKeywords: "preschool education, cute simple shapes, kindergarten pastel, clean learning"
+    };
+  }
+  // Default IPAS / Science or general topic
+  return {
+    bg: `clean minimalist background with soft gentle gradient and subtle contextual atmospheric cues tailored to "${topic}"`,
+    elements: `clear educational diagrams and thematic visual references for "${topic}"`,
+    palette: "forest green, pastel sky blue, sunny gold, and crisp white",
+    canvaKeywords: `${topic.toLowerCase()}, science education, clean vector illustration, presentation slide`
+  };
+}
+
 export default function App() {
   // Wizard states
   const [currentStep, setCurrentStep] = useState<number>(1);
+  const [subject, setSubject] = useState<string>("IPAS / Sains");
   const [topic, setTopic] = useState<string>("Ekosistem & Rantai Makanan");
   const [ageGroup, setAgeGroup] = useState<string>("SD Kelas Tinggi (9-11 tahun)");
+  const [learningObjective, setLearningObjective] = useState<string>("Menganalisis hubungan makan dan dimakan antar komponen biotik dalam ekosistem.");
   const [pages, setPages] = useState<string[]>(STANDARD_13_PAGES);
   const [layout, setLayout] = useState<"landscape" | "portrait">("landscape");
   const [visualStyle, setVisualStyle] = useState<string>("Flat Cartoon / 2D Vector Education");
@@ -370,12 +496,20 @@ export default function App() {
   const [confirmStructureChoice, setConfirmStructureChoice] = useState<'standard13' | 'customDoc'>('standard13');
   const [detectedDocumentPages, setDetectedDocumentPages] = useState<string[]>([]);
   const [confirmSuccessNotice, setConfirmSuccessNotice] = useState<boolean>(false);
+  const [mascotImageError, setMascotImageError] = useState<string | null>(null);
+  const [fileUploadError, setFileUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/api-status')
-      .then(res => res.json())
+      .then(async res => {
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          return res.json();
+        }
+        return { connected: false, message: 'Server lokal (Mode Mandiri)' };
+      })
       .then(data => setApiStatus(data))
-      .catch(() => setApiStatus({ connected: false, message: 'Server lokal' }));
+      .catch(() => setApiStatus({ connected: false, message: 'Server lokal (Mode Mandiri)' }));
   }, []);
   
   // Interactive quiz states
@@ -459,6 +593,7 @@ export default function App() {
     setUploadedFileName(file.name);
     setUploadedSummary(null);
 
+    setFileUploadError(null);
     try {
       // Extract pristine clean human-readable text (stripping out any binary PDF/ZIP headers)
       const cleanText = await extractCleanTextFromFile(file);
@@ -469,38 +604,49 @@ export default function App() {
 
       setExtractedCleanText(cleanText);
 
-      // Call backend API /api/analyze-material
-      const res = await fetch('/api/analyze-material', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          textContent: cleanText,
-          fileName: file.name
-        })
-      });
+      // Call backend API /api/analyze-material safely
+      let parsedWithAi = false;
+      try {
+        const res = await fetch('/api/analyze-material', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            textContent: cleanText,
+            fileName: file.name
+          })
+        });
 
-      if (res.ok) {
-        const data = await res.json();
-        const extractedTitle = data.extractedTopic || file.name.replace(/\.[^/.]+$/, "");
-        const extractedAge = data.recommendedAgeGroup || "SD Kelas Tinggi (9-11 tahun)";
-        const extractedSummary = data.summary || `Dokumen "${file.name}" berhasil dibaca dengan baik.`;
-        const suggestedPages = (data.suggestedPages && Array.isArray(data.suggestedPages) && data.suggestedPages.length > 0)
-          ? data.suggestedPages
-          : STANDARD_13_PAGES;
+        const contentType = res.headers.get('content-type') || '';
+        const resText = await res.text();
 
-        setConfirmTitle(extractedTitle);
-        setConfirmAgeGroup(extractedAge);
-        setConfirmSummary(extractedSummary);
-        setDetectedDocumentPages(suggestedPages);
+        if (res.ok && contentType.includes('application/json') && !resText.trim().startsWith('<')) {
+          const data = JSON.parse(resText);
+          const extractedTitle = data.extractedTopic || file.name.replace(/\.[^/.]+$/, "");
+          const extractedAge = data.recommendedAgeGroup || "SD Kelas Tinggi (9-11 tahun)";
+          const extractedSummary = data.summary || `Dokumen "${file.name}" berhasil dibaca dengan baik.`;
+          const suggestedPages = (data.suggestedPages && Array.isArray(data.suggestedPages) && data.suggestedPages.length > 0)
+            ? data.suggestedPages
+            : STANDARD_13_PAGES;
 
-        // Pre-fill active values
-        setTopic(extractedTitle);
-        setAgeGroup(extractedAge);
-        setUploadedSummary(extractedSummary);
+          setConfirmTitle(extractedTitle);
+          setConfirmAgeGroup(extractedAge);
+          setConfirmSummary(extractedSummary);
+          setDetectedDocumentPages(suggestedPages);
 
-        // Automatically open the confirmation modal so teacher can verify
-        setShowConfirmModal(true);
-      } else {
+          // Pre-fill active values
+          setTopic(extractedTitle);
+          setAgeGroup(extractedAge);
+          setUploadedSummary(extractedSummary);
+
+          // Automatically open the confirmation modal so teacher can verify
+          setShowConfirmModal(true);
+          parsedWithAi = true;
+        }
+      } catch {
+        // Network or offline: seamlessly fallback
+      }
+
+      if (!parsedWithAi) {
         // Fallback local clean text parser
         parseFileLocally(cleanText, file.name);
       }
@@ -511,8 +657,8 @@ export default function App() {
         const fallbackClean = rawText.replace(/[^\x20-\x7E\s]/g, ' ').trim();
         setExtractedCleanText(fallbackClean);
         parseFileLocally(fallbackClean, file.name);
-      } catch (e) {
-        alert("Gagal membaca file: " + (err.message || "Format file tidak didukung."));
+      } catch (e: any) {
+        setFileUploadError("Gagal membaca file: " + (err.message || e?.message || "Format file tidak didukung."));
       }
     } finally {
       setIsAnalyzingFile(false);
@@ -526,7 +672,9 @@ export default function App() {
     setUploadedFileName("Catatan Teks Tempel");
     setUploadedSummary(null);
     setExtractedCleanText(pastedNotes.trim());
+    setFileUploadError(null);
 
+    let parsedWithAi = false;
     try {
       const res = await fetch('/api/analyze-material', {
         method: 'POST',
@@ -537,8 +685,11 @@ export default function App() {
         })
       });
 
-      if (res.ok) {
-        const data = await res.json();
+      const contentType = res.headers.get('content-type') || '';
+      const resText = await res.text();
+
+      if (res.ok && contentType.includes('application/json') && !resText.trim().startsWith('<')) {
+        const data = JSON.parse(resText);
         const extractedTitle = data.extractedTopic || "Catatan Materi";
         const extractedAge = data.recommendedAgeGroup || "SD Kelas Tinggi (9-11 tahun)";
         const extractedSummary = data.summary || "Catatan teks berhasil dianalisis dengan baik.";
@@ -556,12 +707,14 @@ export default function App() {
         setUploadedSummary(extractedSummary);
 
         setShowConfirmModal(true);
-      } else {
+        parsedWithAi = true;
+      }
+    } catch {
+      // API unavailable or returned HTML
+    } finally {
+      if (!parsedWithAi) {
         parseFileLocally(pastedNotes.trim(), "Catatan Tempel");
       }
-    } catch (err) {
-      parseFileLocally(pastedNotes.trim(), "Catatan Tempel");
-    } finally {
       setIsAnalyzingFile(false);
       setShowPasteNotes(false);
     }
@@ -609,9 +762,10 @@ export default function App() {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('Harap pilih file gambar (JPG, PNG, WEBP, atau SVG).');
+      setMascotImageError('Harap pilih file gambar (JPG, PNG, WEBP, atau SVG).');
       return;
     }
+    setMascotImageError(null);
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -673,8 +827,10 @@ export default function App() {
 
   // Load selected preset topic
   const handleSelectPreset = (preset: typeof PRESET_TOPICS[0]) => {
+    setSubject(preset.subject || "IPAS / Sains");
     setTopic(preset.title);
     setAgeGroup(preset.age);
+    setLearningObjective(preset.objective || "");
     setPages(preset.pages);
     // Auto jump to next step
     setCurrentStep(2);
@@ -719,104 +875,305 @@ export default function App() {
     }
   };
 
-  // Helper to generate an ultra-clean prompt matching the reference slide UI screenshots
+  // Helper to generate subject-aware quiz questions for fallback mode
+  const getSubjectAwareQuiz = (qNum: number) => {
+    const text = `${subject} ${topic}`.toLowerCase();
+    if (text.includes('matematika') || text.includes('math') || text.includes('hitung') || text.includes('pecahan') || text.includes('geometri')) {
+      if (qNum === 1) {
+        return {
+          header: "Kuis 1: Konsep Dasar Pecahan",
+          question: "Jika sebuah pizza dipotong menjadi 4 bagian sama besar dan dimakan 1 bagian, berapa sisa pecahannya?",
+          options: ["A. 3/4 bagian", "B. 1/4 bagian", "C. 2/4 bagian", "D. 4/4 bagian"],
+          correctAnswer: "A",
+          explanation: "Sisa pizza adalah 4 bagian utuh dikurangi 1 bagian yang dimakan, yaitu 3 dari 4 bagian (3/4)."
+        };
+      }
+      if (qNum === 2) {
+        return {
+          header: "Kuis 2: Karakteristik Bangun Datar",
+          question: "Bangun datar yang memiliki 4 sisi sama panjang dan 4 sudut siku-siku (90 derajat) adalah?",
+          options: ["A. Persegi panjang", "B. Persegi (Bujur sangkar)", "C. Segitiga sama sisi", "D. Trapesium"],
+          correctAnswer: "B",
+          explanation: "Persegi memiliki keempat sisi yang berukuran sama panjang dan keempat sudutnya siku-siku."
+        };
+      }
+      if (qNum === 3) {
+        return {
+          header: "Kuis 3: Pecahan Senilai",
+          question: "Pecahan 2/4 memiliki nilai yang sama besar (senilai) dengan pecahan?",
+          options: ["A. 1/2", "B. 1/3", "C. 3/4", "D. 2/3"],
+          correctAnswer: "A",
+          explanation: "Jika pembilang dan penyebut 2/4 masing-masing dibagi 2, maka hasilnya adalah pecahan senilai 1/2."
+        };
+      }
+      return {
+        header: "Kuis 4: Bentuk Geometri di Sekitar Kita",
+        question: "Benda di dalam ruang kelas berikut yang permukaannya berbentuk lingkaran adalah?",
+        options: ["A. Jam dinding bundar", "B. Papan tulis", "C. Buku tulis", "D. Penggaris lurus"],
+        correctAnswer: "A",
+        explanation: "Permukaan jam dinding bundar membentuk bangun lingkaran sempurna."
+      };
+    }
+    if (text.includes('bahasa') || text.includes('literasi') || text.includes('indonesia') || text.includes('puisi') || text.includes('cerita')) {
+      if (qNum === 1) {
+        return {
+          header: "Kuis 1: Menemukan Ide Pokok Paragraf",
+          question: "Di mana letak ide pokok atau kalimat utama dalam sebuah paragraf deduktif?",
+          options: ["A. Di awal paragraf", "B. Di akhir paragraf", "C. Di tengah paragraf", "D. Di luar teks bacaan"],
+          correctAnswer: "A",
+          explanation: "Paragraf deduktif adalah paragraf yang gagasan utama atau kalimat utamanya terletak di awal."
+        };
+      }
+      if (qNum === 2) {
+        return {
+          header: "Kuis 2: Unsur Intrinsik Cerita",
+          question: "Tokoh yang memiliki sifat baik hati dan menjadi pusat cerita disebut tokoh?",
+          options: ["A. Antagonis", "B. Protagonis", "C. Figuran", "D. Tritagonis"],
+          correctAnswer: "B",
+          explanation: "Protagonis adalah tokoh utama yang umumnya berwatak positif, baik hati, dan membawa nilai moral."
+        };
+      }
+      if (qNum === 3) {
+        return {
+          header: "Kuis 3: Kosakata & Makna Kata",
+          question: "Sinonim (persamaan makna kata) dari kata 'tekun' dalam belajar adalah?",
+          options: ["A. Malas", "B. Rajin dan gigih", "C. Lambat", "D. Cepat lelah"],
+          correctAnswer: "B",
+          explanation: "Tekun memiliki makna bersungguh-sungguh, rajin, dan tidak mudah menyerah."
+        };
+      }
+      return {
+        header: "Kuis 4: Pesan Moral Teks",
+        question: "Pesan moral atau nasihat mendidik yang ingin disampaikan pengarang kepada pembaca disebut?",
+        options: ["A. Alur", "B. Amanat", "C. Latar tempat", "D. Sudut pandang"],
+        correctAnswer: "B",
+        explanation: "Amanat adalah nilai kebaikan atau pesan moral yang dapat dipetik pembaca dari isi cerita."
+      };
+    }
+    if (text.includes('ips') || text.includes('sejarah') || text.includes('geografi') || text.includes('budaya')) {
+      if (qNum === 1) {
+        return {
+          header: "Kuis 1: Mengenal Rumah Adat Nusantara",
+          question: "Rumah adat khas berbentuk perahu telungkup bernama Tongkonan berasal dari daerah?",
+          options: ["A. Tana Toraja, Sulawesi Selatan", "B. Minangkabau, Sumatera Barat", "C. Papua Pegunungan", "D. Bali"],
+          correctAnswer: "A",
+          explanation: "Rumah Tongkonan adalah rumah adat khas masyarakat suku Toraja di Sulawesi Selatan."
+        };
+      }
+      if (qNum === 2) {
+        return {
+          header: "Kuis 2: Alat Musik Tradisional",
+          question: "Alat musik petik tradisional Sasando yang terbuat dari daun lontar berasal dari?",
+          options: ["A. Nusa Tenggara Timur (Pulau Rote)", "B. Jawa Barat", "C. Kalimantan Barat", "D. Aceh"],
+          correctAnswer: "A",
+          explanation: "Sasando adalah instrumen musik petik istimewa dari Pulau Rote, Nusa Tenggara Timur."
+        };
+      }
+      if (qNum === 3) {
+        return {
+          header: "Kuis 3: Semboyan Persatuan Bangsa",
+          question: "Makna luhur dari semboyan bangsa Indonesia 'Bhinneka Tunggal Ika' adalah?",
+          options: ["A. Berbeda-beda tetapi tetap satu jua", "B. Bersatu kita teguh bercerai kita runtuh", "C. Negara kepulauan makmur", "D. Maju bersama generasi muda"],
+          correctAnswer: "A",
+          explanation: "Bhinneka Tunggal Ika menegaskan keberagaman suku, agama, dan adat dalam satu kesatuan bangsa."
+        };
+      }
+      return {
+        header: "Kuis 4: Wastra Nusantara",
+        question: "Kain tenun tradisional Ulos merupakan warisan budaya khas dari suku?",
+        options: ["A. Batak, Sumatera Utara", "B. Dayak, Kalimantan", "C. Bugis, Sulawesi", "D. Betawi, Jakarta"],
+        correctAnswer: "A",
+        explanation: "Kain Ulos adalah kain tenun tradisional sakral kebanggaan masyarakat Batak di Sumatera Utara."
+      };
+    }
+    if (text.includes('pai') || text.includes('agama') || text.includes('akhlak')) {
+      if (qNum === 1) {
+        return {
+          header: "Kuis 1: Sikap Jujur & Amanah",
+          question: "Sikap senantiasa berkata benar dan tidak berbohong kepada guru dan orang tua disebut?",
+          options: ["A. Jujur (Shiddiq)", "B. Riya", "C. Khianat", "D. Dengki"],
+          correctAnswer: "A",
+          explanation: "Jujur adalah akhlak mulia yang mendatangkan ketenangan hati dan dipercaya orang lain."
+        };
+      }
+      if (qNum === 2) {
+        return {
+          header: "Kuis 2: Tolong-Menolong dalam Kebaikan",
+          question: "Saling membantu teman yang sedang tertimpa musibah atau kesulitan termasuk perbuatan?",
+          options: ["A. Terpuji (Mahmudah)", "B. Tercela (Mazmumah)", "C. Sia-sia", "D. Berlebihan"],
+          correctAnswer: "A",
+          explanation: "Gotong royong dan tolong-menolong dalam kebaikan adalah wujud akhlak terpuji."
+        };
+      }
+      if (qNum === 3) {
+        return {
+          header: "Kuis 3: Berbakti kepada Orang Tua",
+          question: "Cara menunjukkan rasa hormat dan bakti kepada orang tua di rumah adalah?",
+          options: ["A. Mendoakan dan bertutur kata santun", "B. Membantah nasihat baiknya", "C. Mengabaikan panggilannya", "D. Menuntut sesuatu yang berlebihan"],
+          correctAnswer: "A",
+          explanation: "Berbakti kepada orang tua dilakukan dengan berbuat ihsan, berbicara lembut, dan mendoakannya."
+        };
+      }
+      return {
+        header: "Kuis 4: Menjaga Kebersihan",
+        question: "Menjaga kebersihan meja belajar dan lingkungan kelas merupakan cerminan dari?",
+        options: ["A. Pribadi berakhlak mulia", "B. Pekerjaan yang membuang waktu", "C. Tugas penjaga sekolah semata", "D. Kebiasaan pura-pura rajin"],
+        correctAnswer: "A",
+        explanation: "Kebersihan lahir dan batin adalah pangkal kesehatan dan keluhuran budi pekerti."
+      };
+    }
+    if (text.includes('paud') || text.includes('tk') || text.includes('balita')) {
+      if (qNum === 1) {
+        return {
+          header: "Kuis 1: Suara Hewan Lucu",
+          question: "Hewan berbulu halus yang suka mengeong 'meong... meong...' adalah?",
+          options: ["A. Kucing lucu", "B. Burung", "C. Sapi", "D. Ikan"],
+          correctAnswer: "A",
+          explanation: "Kucing adalah hewan peliharaan manis yang mengeluarkan suara mengeong."
+        };
+      }
+      if (qNum === 2) {
+        return {
+          header: "Kuis 2: Makanan Hewan",
+          question: "Siapa kelinci putih yang suka melompat dan memakan sayur segar berwarna oranye?",
+          options: ["A. Wortel manis", "B. Daun kering", "C. Ranting pohon", "D. Es krim"],
+          correctAnswer: "A",
+          explanation: "Kelinci sangat suka mengunyah wortel segar yang kaya vitamin."
+        };
+      }
+      if (qNum === 3) {
+        return {
+          header: "Kuis 3: Ciri Fisik Hewan",
+          question: "Hewan bertubuh besar dengan belalai panjang dan telinga lebar seperti kipas adalah?",
+          options: ["A. Gajah", "B. Semut", "C. Ayam", "D. Kucing"],
+          correctAnswer: "A",
+          explanation: "Gajah adalah mamalia darat terbesar dengan belalai panjang."
+        };
+      }
+      return {
+        header: "Kuis 4: Warna Daun Alam",
+        question: "Warna daun pohon yang segar dan asri di halaman sekolah kita adalah?",
+        options: ["A. Hijau", "B. Ungu", "C. Merah muda", "D. Abu-abu"],
+        correctAnswer: "A",
+        explanation: "Daun segar berwarna hijau cerah."
+      };
+    }
+    // Default Science / Ecosystem
+    if (qNum === 1) {
+      return {
+        header: "Kuis 1: Peran Makhluk Hidup",
+        question: "Siapa yang membantu penyerbukan bunga saat mencari nektar?",
+        options: ["A. Lebah dan kupu-kupu", "B. Ikan di sungai", "C. Cacing di tanah", "D. Katak di kolam"],
+        correctAnswer: "A",
+        explanation: "Lebah dan kupu-kupu hinggap pada bunga untuk menghisap nektar dan memindahkan serbuk sari."
+      };
+    }
+    if (qNum === 2) {
+      return {
+        header: "Kuis 2: Habitat Makhluk Hidup",
+        question: `Di mana habitat alami tempat organisme dalam materi "${topic}" berkembang biak?`,
+        options: ["A. Di habitat ekologis yang sesuai", "B. Di tempat buatan tertutup", "C. Di tempat tanpa nutrisi", "D. Di ruang hampa"],
+        correctAnswer: "A",
+        explanation: "Setiap organisme memiliki habitat alami yang mendukung rantai kehidupannya."
+      };
+    }
+    if (qNum === 3) {
+      return {
+        header: "Kuis 3: Aliran Energi Rantai Makanan",
+        question: "Dalam rantai makanan ekosistem, siapakah yang berperan sebagai konsumen tingkat pertama (primer)?",
+        options: ["A. Herbivora (pemakan tumbuhan)", "B. Karnivora puncak (predator)", "C. Dekomposer pengurai", "D. Tumbuhan produsen"],
+        correctAnswer: "A",
+        explanation: "Konsumen primer adalah hewan herbivora yang memakan produsen langsung."
+      };
+    }
+    return {
+      header: "Kuis 4: Komponen Ekosistem",
+      question: `Apakah faktor cahaya, air, dan suhu termasuk komponen abiotik dalam materi "${topic}"?`,
+      options: ["A. Benar, itu komponen abiotik", "B. Salah, itu komponen biotik", "C. Hanya air yang abiotik", "D. Tidak memiliki pengaruh"],
+      correctAnswer: "A",
+      explanation: "Komponen abiotik adalah faktor lingkungan fisik tak hidup yang menopang kehidupan."
+    };
+  };
+
+  // Helper to generate an ultra-clean prompt strictly complying with Master Prompt
   const generateCleanPromptForPage = (pageTitle: string, index: number) => {
     const aspect = layout === 'portrait' ? '9:16 vertical portrait' : '16:9 landscape';
     const titleLower = pageTitle.toLowerCase();
+    const theme = getAdaptiveSubjectTheme(subject, topic);
 
-    // 1. Style clause
-    let styleClause = "3D Pixar clay glossy style, smooth volume, soft rounded shapes, cheerful studio lighting, modern claymorphic elements";
-    if (visualStyle.includes("Flat Cartoon") || visualStyle.includes("2D Vector")) {
-      styleClause = "flat 2D vector educational illustration style, clean solid colors, crisp outlines, modern minimalist aesthetic";
+    // 1. Style clause based on visualStyle
+    let styleClause = "flat 2D vector educational illustration style, clean solid colors, crisp outlines, modern minimalist aesthetic";
+    if (visualStyle.includes("3D Pixar") || visualStyle.includes("3D Glossy") || visualStyle.includes("3D Clay")) {
+      styleClause = "clean modern 3D cartoon illustration style, gentle soft ambient studio lighting, smooth volumes, subtle minimal drop shadows, polished aesthetic without excessive gloss";
     } else if (visualStyle.includes("Kawaii") || visualStyle.includes("Chibi")) {
-      styleClause = "kawaii pastel chibi illustration style, cute oversized head proportion, friendly blushing face, soft pastel color palette";
+      styleClause = "kawaii pastel chibi illustration style, cute friendly proportions, soft harmonic pastel colors, clean outlines";
     } else if (visualStyle.includes("Anime") || visualStyle.includes("Ghibli")) {
-      styleClause = "Japanese anime studio Ghibli aesthetic, hand-painted scenic textures, warm natural lighting";
+      styleClause = "Japanese anime studio Ghibli aesthetic, gentle hand-painted scenery tones, soft daylight, tidy composition";
     } else if (visualStyle.includes("Watercolor")) {
-      styleClause = "soft watercolor storybook illustration style, gentle artistic brush strokes, calming aesthetic";
-    } else if (visualStyle.includes("Paper")) {
-      styleClause = "layered 3D paper cut craft style, depth and paper textures, clean geometric curves";
+      styleClause = "soft watercolor storybook aesthetic, gentle artistic wash, calming pastel palette, clean white negative space";
     } else if (visualStyle.includes("Doodle") || visualStyle.includes("Hand-Drawn")) {
-      styleClause = "charming hand-drawn doodle style, playful pencil sketch outlines, clean and friendly";
-    } else if (visualStyle.includes("Memphis")) {
-      styleClause = "modern Memphis retro educational design, bold geometric shapes, clean vibrant contrast";
-    } else if (visualStyle.includes("diorama")) {
-      styleClause = "whimsical 3D miniature diorama, tilt-shift camera angle, warm studio lighting";
-    } else if (visualStyle.includes("Pixel") || visualStyle.includes("Low Poly")) {
-      styleClause = "isometric low-poly 3D educational game UI, clean polygonal forms, bright palette";
-    } else if (visualStyle.includes("Engraving") || visualStyle.includes("Vintage")) {
-      styleClause = "vintage textbook engraving style, fine ink line etching, elegant scientific illustration";
-    } else if (visualStyle.includes("Sci-Fi") || visualStyle.includes("Hologram")) {
-      styleClause = "clean futuristic sci-fi hologram style, subtle cyan glowing accents, high-tech educational UI";
+      styleClause = "clean minimalist hand-drawn doodle style, neat sketch accents, friendly educational lines";
     }
 
     // 2. Character clause
-    let characterClause = "Left side features a cute 3D Pixar-style elementary student character smiling warmly and gesturing towards the content";
+    let characterClause = "Left side features a friendly tutor companion smiling politely and gesturing towards the presentation card";
     if (mascotType === 'none') {
-      characterClause = "Clean minimalist presentation slide UI focused purely on core diagrams and lesson content without mascot characters";
+      characterClause = "Minimalist presentation slide UI focused purely on core diagrams and lesson content without mascot characters";
     } else if (mascotType === 'custom' && mascotImageName) {
-      characterClause = `Left side features a cute friendly tutor character inspired by the uploaded character photo ("${mascotImageName}", ${customMascot || 'friendly teacher companion'}), smiling and gesturing towards the slide content`;
+      characterClause = `Left side features a friendly tutor character inspired by the reference photo ("${mascotImageName}", ${customMascot || 'tutor companion'}), smiling and gesturing towards the slide content without obscuring text`;
     } else if (mascotType === 'custom' && customMascot) {
-      characterClause = `Left side features a cute friendly tutor character (${customMascot}) with expressive eyes and cheerful smile`;
+      characterClause = `Left side features a friendly educational companion (${customMascot}) smiling warmly and gesturing towards the content`;
     }
 
-    // 3. Detail level modifier
-    let detailClause = "Ultra-clean minimalist composition, generous whitespace, pristine negative space, zero visual clutter, neat rounded card container, high contrast readability";
-    if (detailLevel === '3d-premium') {
-      detailClause = "3D premium glossy aesthetic, soft studio rim lighting, modern rounded translucent card container, polished surfaces, generous whitespace";
-    } else if (detailLevel === '3d-detail-tinggi') {
-      detailClause = "Rich thematic environment with detailed textures, expressive character, balanced layout with ample negative space and clean modular cards";
-    } else if (detailLevel === 'adaptif-otomatis') {
-      detailClause = "Balanced educational presentation UI, generous whitespace, clean layout hierarchy, clutter-free";
-    }
+    // 3. Detail level & Strict Clean Layout Rules
+    const detailClause = "Ultra-clean minimalist composition, generous negative space (ample whitespace), zero visual clutter, neat rounded white modular card container with subtle soft drop shadow, high text contrast, no floating confetti or glitter particles, content-first presentation slide layout";
 
     // 4. Slide specific layout
     let slideSpecific = "";
     if (titleLower.includes('cover') || titleLower.includes('sampul')) {
-      slideSpecific = `Center displays a large, clean title banner reading "${topic}" with playful yet clean typography. Soft background of gentle rolling green meadow hills, miniature stylized trees, and pastel blue sunny sky with fluffy 3D clay clouds. Bottom center has a prominent glossy rounded orange play button labeled "MULAI".`;
+      slideSpecific = `Center displays a prominent, clean title banner reading "${topic}" with clean educational typography, subject badge "${subject}", and subtitle "${ageGroup}". Background features ${theme.bg}. Bottom center has a clean, tactile rounded action button "MULAI BELAJAR"`;
     } else if (titleLower.includes('navigasi') || titleLower.includes('menu')) {
-      slideSpecific = `Center and right side display two prominent clean rounded white card buttons with subtle drop shadows: one with a glowing target icon labeled "Tujuan Pembelajaran", and another with a gamepad icon labeled "Kuis Interaktif". Cheerful pastel landscape background with soft rolling hills and daisy flowers.`;
+      slideSpecific = `Displays two neat, modular white rounded card buttons with clean icons: "Tujuan Pembelajaran" and "Kuis Interaktif". Spacious layout, high contrast readability. Background features ${theme.bg}`;
     } else if (titleLower.includes('tujuan') || titleLower.includes('indikator')) {
-      slideSpecific = `Right side features a large clean white rounded card container with soft shadow, containing 3 neatly organized checklist items with glowing flag badges and generous whitespace. Soft warm outdoor meadow background.`;
+      slideSpecific = `Right side features a large clean white rounded card container with 3 neatly organized checklist items explaining learning goals for "${topic}". Ample negative space, high contrast typography. Background features ${theme.bg}`;
     } else if (titleLower.includes('apersepsi') || titleLower.includes('pengantar') || titleLower.includes('motivasi')) {
-      slideSpecific = `Center displays an enchanting, stylized glowing mystery treasure chest on a neat circular pedestal, slightly opened with soft golden light emanating, introducing the wonders of "${topic}". Mascot peeking with an excited curious expression. Clean minimalist background with soft gradient sky and gentle grassy hill.`;
+      slideSpecific = `Center displays a clean educational focal visual representing "${topic}" on a neat pedestal. Tutor points thoughtfully with an encouraging expression. Background features ${theme.bg}`;
     } else if (titleLower.includes('peta') || titleLower.includes('perjalanan') || titleLower.includes('titik kuis')) {
-      slideSpecific = `Features a neat, curved dotted trail connecting 4 colorful rounded numbered checkpoint pins (1, 2, 3, 4) across a clean stylized landscape. Mascot standing happily at checkpoint 1 with an adventure backpack. Clear header banner "Peta Petualangan Kuis".`;
-    } else if (titleLower.includes('kuis 1') || titleLower.includes('penyerbukan')) {
-      slideSpecific = `Right side features a large clean white rounded card container with subtle drop shadow, displaying question text at top and 4 neat answer option cards with circular orange letter badges (A, B, C, D) and clean dashed dividers. Thematic background of colorful flowers, honeybee, and soft green garden.`;
-    } else if (titleLower.includes('kuis 2') || titleLower.includes('ikan')) {
-      slideSpecific = `Right side features a large clean white rounded card container with subtle drop shadow, displaying question text and 4 clean horizontal option pills with colorful circular badges (A, B, C, D). Thematic background of a clean crystal-clear blue aquatic pond with gentle water ripples and friendly fish.`;
-    } else if (titleLower.includes('kuis 3') || titleLower.includes('konsumen') || titleLower.includes('rantai')) {
-      slideSpecific = `Right side features a large clean white rounded card with soft drop shadow, displaying question header and 4 neat multiple-choice options with circular badges (A, B, C, D). Thematic background of a sunlit grassy meadow ecosystem with clean stylized plant and herbivore elements.`;
-    } else if (titleLower.includes('kuis 4') || titleLower.includes('matahari') || titleLower.includes('biotik')) {
-      slideSpecific = `Right side features a large clean white rounded card with soft drop shadow, displaying question header and 4 tidy option cards with circular badges (A, B, C, D). Thematic background of bright warm golden sunbeams illuminating a clean grassy landscape.`;
+      slideSpecific = `Features a neat, minimalist progress trail connecting 4 clean numbered checkpoint badges (1, 2, 3, 4) across the screen. Clutter-free design with clear visual hierarchy. Background features ${theme.bg}`;
+    } else if (titleLower.includes('kuis 1') || index === 5) {
+      slideSpecific = `Right side features a large clean white rounded card container displaying question text at top and 4 neat horizontal option cards with circular letter badges (A, B, C, D) and clear typography. Left side features ${characterClause}. Background features ${theme.bg}`;
+    } else if (titleLower.includes('kuis 2') || index === 6) {
+      slideSpecific = `Right side features a large clean white rounded card container with question header and 4 clean horizontal option pills with letter badges (A, B, C, D). Left side features ${characterClause}. Background features ${theme.bg}`;
+    } else if (titleLower.includes('kuis 3') || index === 7) {
+      slideSpecific = `Right side features a large clean white rounded card with soft drop shadow, displaying question and 4 tidy multiple-choice cards (A, B, C, D). Background features ${theme.bg}`;
+    } else if (titleLower.includes('kuis 4') || index === 8) {
+      slideSpecific = `Right side features a large clean white rounded card with soft drop shadow, displaying question header and 4 tidy option cards with circular badges (A, B, C, D). Background features ${theme.bg}`;
     } else if (titleLower.includes('respon benar') || titleLower.includes('benar')) {
-      slideSpecific = `Center displays three large glowing 3D golden achievement stars with soft sparkle ribbons and subtle floating confetti. Mascot jumping joyfully in victory. Clean white rounded badge reading "JAWABAN BENAR / HEBAT!". Bottom features a glossy rounded emerald button "Lanjut ke Tantangan Berikutnya". Soft cheerful meadow background.`;
+      slideSpecific = `Center displays three clean golden achievement stars and a tidy green success badge "JAWABAN TEPAT!". Tutor character gives a cheerful thumbs up. Bottom features a tactile rounded button "Lanjut ke Soal Berikutnya". No messy confetti, clean uncluttered layout. Background features ${theme.bg}`;
     } else if (titleLower.includes('respon salah') || titleLower.includes('salah')) {
-      slideSpecific = `Mascot with a warm, caring smile holding a glowing lightbulb idea lamp, with a friendly clean speech bubble "Ayo Coba Lagi, Kamu Pasti Bisa!". Clean white rounded card offering hint buttons "Lihat Petunjuk" and "Ulangi Soal". Soft pastel background.`;
+      slideSpecific = `Tutor character with a warm encouraging smile holding a clean glowing lightbulb motif, with a friendly clean speech bubble "Ayo Coba Lagi, Kamu Pasti Bisa!". Clean white rounded card offering hint buttons "Lihat Petunjuk" dan "Ulangi Soal". Background features ${theme.bg}`;
     } else if (titleLower.includes('rangkuman') || titleLower.includes('summary')) {
-      slideSpecific = `Center displays a large clean white rounded board container with soft drop shadow, organized into 4 neat summary cards with colorful topic icons summarizing key points of "${topic}". Mascot on the side pointing towards the board with a cheerful expression. Soft pastel landscape background.`;
+      slideSpecific = `Center displays a large clean white rounded board container organized into 3-4 structured modular cards highlighting core takeaways of "${topic}". Clean typography, clear visual hierarchy. Background features ${theme.bg}`;
     } else if (titleLower.includes('penutup') || titleLower.includes('selesai')) {
-      slideSpecific = `Center displays a cheerful congratulations banner celebrating completion of the learning mission for "${topic}". Mascot waving happily with a small graduation cap next to a gleaming trophy. Prominent glossy rounded orange button labeled "SELESAI". Soft sunny sky background.`;
+      slideSpecific = `Center displays a cheerful, elegant congratulations card celebrating completion of "${topic}". Tutor waving politely next to a neat diploma badge. Prominent clean rounded action button "SELESAI & ULANGI". Background features ${theme.bg}`;
     } else {
-      slideSpecific = `Right side features a large clean white rounded card container with generous whitespace displaying key concepts of "${pageTitle}". Soft gentle themed landscape background for "${topic}".`;
+      slideSpecific = `Right side features a large clean white rounded card container with generous whitespace displaying key concepts of "${pageTitle}". Left side has ${characterClause}. Background features ${theme.bg}`;
     }
 
-    return `Clean educational presentation slide UI, ${aspect} aspect ratio. ${styleClause}. ${characterClause}. ${slideSpecific} ${detailClause}. Soft ambient studio lighting, sharp focus, 8k resolution, UI/UX educational presentation slide mockup.`;
+    return `Clean educational presentation slide UI, ${aspect} aspect ratio. ${styleClause}. ${characterClause}. ${slideSpecific}. ${detailClause}. Soft ambient studio lighting, sharp focus, 8k resolution, UI/UX educational presentation mockup.`;
   };
 
-  // Local fallback generator (when Gemini is not configured or fails)
+  // Local fallback generator (strictly obeying Master Prompt rules)
   const generateLocalPromptsFallback = () => {
     const layoutSize = layout === 'portrait' ? '9:16 (Portrait)' : '16:9 (Landscape)';
-    const selectedStyleObj = VISUAL_STYLES.find(s => s.id === visualStyle) || VISUAL_STYLES[0];
-    const canvaKeywords = selectedStyleObj.canvaKeywords;
+    const theme = getAdaptiveSubjectTheme(subject, topic);
 
     return pages.map((pageTitle, index) => {
       let headerText = pageTitle;
       let quizData: any = undefined;
       const titleLower = pageTitle.toLowerCase();
 
-      // Quiz data generation
+      // Subject-adaptive quiz & header texts
       if (titleLower.includes('cover') || titleLower.includes('sampul')) {
         headerText = topic || "Media Pembelajaran Interaktif";
       } else if (titleLower.includes('navigasi') || titleLower.includes('menu')) {
@@ -824,41 +1181,25 @@ export default function App() {
       } else if (titleLower.includes('tujuan') || titleLower.includes('indikator')) {
         headerText = "Tujuan Pembelajaran Kita";
       } else if (titleLower.includes('apersepsi') || titleLower.includes('pengantar') || titleLower.includes('motivasi')) {
-        headerText = "Mari Berpikir & Jelajahi!";
+        headerText = "Mari Berpikir & Mengamati!";
       } else if (titleLower.includes('peta') || titleLower.includes('perjalanan') || titleLower.includes('titik kuis')) {
         headerText = "Peta Petualangan 4 Titik Kuis";
-      } else if (titleLower.includes('kuis 1') || titleLower.includes('penyerbukan')) {
-        headerText = "Kuis 1: Siapa yang Membantu Penyerbukan Bunga?";
-        quizData = {
-          question: "Siapa yang membantu penyerbukan bunga saat mencari nektar?",
-          options: ["A. Lebah dan kupu-kupu", "B. Ikan di sungai", "C. Cacing di tanah", "D. Katak di kolam"],
-          correctAnswer: "A",
-          explanation: "Lebah dan kupu-kupu hinggap pada bunga untuk menghisap nektar. Serbuk sari yang menempel pada tubuh serangga akan berpindah ke kepala putik, membantu terjadinya penyerbukan."
-        };
-      } else if (titleLower.includes('kuis 2') || titleLower.includes('ikan')) {
-        headerText = "Kuis 2: Di Mana Ikan Hidup?";
-        quizData = {
-          question: "Di mana habitat alami tempat ikan hidup dan bernapas menggunakan insang?",
-          options: ["A. Di daratan kering", "B. Di air (sungai, danau, laut)", "C. Di atas pucuk pohon", "D. Di bawah lapisan tanah tanpa air"],
-          correctAnswer: "B",
-          explanation: "Ikan adalah hewan vertebrata akuatik yang hidup di air (sungai, danau, rawa, maupun laut) dan bernapas menyerap oksigen terlarut menggunakan insang."
-        };
-      } else if (titleLower.includes('kuis 3') || titleLower.includes('konsumen') || titleLower.includes('rantai')) {
-        headerText = "Kuis 3: Siapa Konsumen Tingkat Pertama pada Rantai Makanan?";
-        quizData = {
-          question: "Dalam rantai makanan ekosistem, siapakah yang berperan sebagai konsumen tingkat pertama (primer)?",
-          options: ["A. Herbivora (hewan pemakan tumbuhan)", "B. Karnivora puncak (singa/elang)", "C. Jamur & dekomposer pengurai", "D. Tumbuhan berklorofil (produsen)"],
-          correctAnswer: "A",
-          explanation: "Konsumen tingkat pertama adalah hewan herbivora yang langsung memakan produsen (tumbuhan hijau) untuk mendapatkan energi pertama kali dalam rantai makanan."
-        };
-      } else if (titleLower.includes('kuis 4') || titleLower.includes('matahari') || titleLower.includes('biotik')) {
-        headerText = "Kuis 4: Cahaya Matahari Termasuk Komponen Biotik?";
-        quizData = {
-          question: "Apakah cahaya matahari termasuk ke dalam kelompok komponen biotik dalam suatu ekosistem?",
-          options: ["A. Benar, karena menghasilkan energi hangat", "B. Salah, cahaya matahari adalah komponen Abiotik", "C. Benar, karena termasuk makhluk hidup", "D. Benar, karena memiliki warna cerah"],
-          correctAnswer: "B",
-          explanation: "Cahaya matahari adalah benda tak hidup (Abiotik). Komponen biotik hanyalah segala sesuatu yang hidup (manusia, hewan, tumbuhan, dan mikroorganisme)."
-        };
+      } else if (titleLower.includes('kuis 1') || index === 5) {
+        const q = getSubjectAwareQuiz(1);
+        headerText = q.header;
+        quizData = q;
+      } else if (titleLower.includes('kuis 2') || index === 6) {
+        const q = getSubjectAwareQuiz(2);
+        headerText = q.header;
+        quizData = q;
+      } else if (titleLower.includes('kuis 3') || index === 7) {
+        const q = getSubjectAwareQuiz(3);
+        headerText = q.header;
+        quizData = q;
+      } else if (titleLower.includes('kuis 4') || index === 8) {
+        const q = getSubjectAwareQuiz(4);
+        headerText = q.header;
+        quizData = q;
       } else if (titleLower.includes('respon benar') || titleLower.includes('benar')) {
         headerText = "Luar Biasa! Jawabanmu Benar Sekali ⭐⭐⭐";
       } else if (titleLower.includes('respon salah') || titleLower.includes('salah')) {
@@ -877,22 +1218,23 @@ export default function App() {
 
       // Structured Indonesian guide
       const mascotClause = mascotType === 'none' 
-        ? 'Tanpa maskot (fokus murni diagram dan materi sains).' 
+        ? 'Tanpa maskot (fokus murni diagram dan materi esensial).' 
         : mascotType === 'custom' && mascotImageName 
           ? `Karakter tutor kustom berdasarkan foto referensi "${mascotImageName}".`
           : mascotType === 'custom' && customMascot 
             ? `Karakter tutor "${customMascot}".`
-            : 'Maskot tutor ramah yang menyapa siswa di sisi kiri slide.';
+            : 'Maskot tutor ramah yang menyapa siswa di sisi kiri slide tanpa menutupi konten.';
 
       const structuredSpec = `📐 Layout: ${layoutSize} (1920x1080 px Landscape / 1080x1920 px Portrait)
-✨ Tingkat Detail: ${detailLevel === 'clean-minimalis' ? 'Clean Minimalis (Sesuai Contoh Gambar)' : detailLevel}
+📚 Mata Pelajaran: ${subject} | Topik: "${topic}"
+✨ Tingkat Detail: ${detailLevel === 'clean-minimalis' ? 'Clean Minimalis (Master Prompt Standard)' : detailLevel}
 🎨 Gaya Visual: ${visualStyle}
-🌿 Latar Belakang: Lanskap lembut perbukitan hijau, langit cerah pastel, dan sentuhan visual topik "${topic}".
+🌿 Latar Belakang: ${theme.bg}
 🧑‍🎓 Karakter Pendamping: ${mascotClause}
-📄 Kartu Konten Utama: Kontainer kartu putih rounded (sudut melengkung halus) dengan drop shadow lembut dan ruang kosong (whitespace) lega untuk materi & opsi kuis.
-🔘 Tombol Interaktif: Tombol rounded taktil mengilap (glossy pill button) berwarna cerah kontras.
-🎨 Palet Warna: Hijau pastel, biru langit lembut, oranye ceria, putih bersih (kontras tinggi, ramah anak).
-🔍 Kata Kunci Canva: ${canvaKeywords}`;
+📄 Kartu Konten Utama: Kontainer kartu putih rounded bersih dengan drop shadow lembut dan ruang kosong (whitespace) lega untuk materi & opsi kuis (Content-First Design).
+🔘 Tombol Interaktif: Tombol rounded taktil bersih berkontras jelas di bagian bawah.
+🎨 Palet Warna: ${theme.palette}
+🔍 Kata Kunci Canva: ${theme.canvaKeywords}`;
 
       return {
         pageTitle: `Halaman ${index + 1}: ${pageTitle}`,
@@ -900,10 +1242,10 @@ export default function App() {
         cleanPrompt: cleanPrompt,
         midjourneyPrompt: midjourneyPrompt,
         illustrationDesc: structuredSpec,
-        canvaKeywords: canvaKeywords,
+        canvaKeywords: theme.canvaKeywords,
         navigationButtons: index === 0 ? "MULAI BELAJAR!" : index === pages.length - 1 ? "SELESAI & ULANGI" : "LANJUT",
         estimatedTime: "1-2 Menit",
-        educationalObjective: `Memberikan stimulus visual yang kuat untuk sub-materi "${pageTitle}" sehingga mempercepat pemahaman kognitif siswa.`,
+        educationalObjective: `Memberikan stimulus visual yang terstruktur dan bersih untuk sub-materi "${pageTitle}" sehingga mempercepat pemahaman kognitif siswa.`,
         quizData: quizData
       };
     });
@@ -916,8 +1258,10 @@ export default function App() {
     setResults(null);
 
     const payload = {
+      subject: subject || "IPAS / Sains",
       topic: topic.trim() || "Ekosistem & Rantai Makanan",
       ageGroup,
+      learningObjective: learningObjective || "",
       pages,
       layout,
       visualStyle,
@@ -940,12 +1284,25 @@ export default function App() {
         body: JSON.stringify(payload)
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Server returned an error');
+      const contentType = response.headers.get('content-type') || '';
+      const responseText = await response.text();
+
+      // Check if response is HTML (e.g. static hosting returning index.html or server error page)
+      if (responseText.trim().startsWith('<') || !contentType.includes('application/json')) {
+        throw new Error('SERVER_STATIC_OR_OFFLINE');
       }
 
-      const data = await response.json();
+      let data: any;
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        throw new Error('SERVER_INVALID_JSON');
+      }
+
+      if (!response.ok) {
+        throw new Error(data?.error || `Server mengembalikan status HTTP ${response.status}`);
+      }
+
       if (data.prompts && Array.isArray(data.prompts)) {
         const selectedStyleObj = VISUAL_STYLES.find(s => s.id === visualStyle) || VISUAL_STYLES[0];
         const enrichedPrompts = data.prompts.map((p: any, idx: number) => {
@@ -969,7 +1326,14 @@ export default function App() {
       const fallbackPrompts = generateLocalPromptsFallback();
       setResults(fallbackPrompts);
       setAiEngineUsed(false);
-      setGenerationError(`Catatan Server: ${err.message || 'Layanan offline'}. Kami telah membuatkan prompt premium dengan Mesin Generator Cerdas EduSmart lokal.`);
+
+      if (err.message === 'SERVER_STATIC_OR_OFFLINE') {
+        setGenerationError('Mode Standalone: Server backend berjalan pada mode statis (bukan JSON API). Seluruh prompt telah dirumuskan secara mulus menggunakan Mesin EduSmart Lokal berstandar premium.');
+      } else if (err.message === 'SERVER_INVALID_JSON') {
+        setGenerationError('Respon server tidak terbaca sebagai JSON. Seluruh prompt telah digenerate dengan Mesin EduSmart Lokal.');
+      } else {
+        setGenerationError(`Catatan: ${err.message || 'Layanan cloud tidak tersedia'}. Seluruh prompt telah berhasil dibuatkan dengan Mesin EduSmart Lokal.`);
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -1344,22 +1708,79 @@ export default function App() {
             {/* Form Section (Col span 8 on desktop) */}
             <div className="lg:col-span-8 bg-white border border-[#F2EDE2] rounded-3xl p-6 md:p-8 shadow-sm flex flex-col gap-6">
               
-              {/* STEP 1: TOPIK */}
+              {/* STEP 1: MATA PELAJARAN & TOPIK */}
               {currentStep === 1 && (
                 <div className="flex flex-col gap-5 animate-fade-in">
                   <div>
-                    <h2 className="text-xl font-bold text-forest-900 font-display">Langkah 1: Masukkan Topik Pembelajaran</h2>
-                    <p className="text-xs text-neutral-500 mt-1">Tulis materi apa yang ingin Anda ajarkan (misal: Ekosistem, Kerajaan Singasari, dsb.)</p>
+                    <h2 className="text-xl font-bold text-forest-900 font-display">Langkah 1: Mata Pelajaran & Topik Materi</h2>
+                    <p className="text-xs text-neutral-500 mt-1">Pilih mata pelajaran dan tentukan materi pembelajaran. Sistem akan mengadaptasi latar, palet warna, dan objek visual secara proporsional sesuai standar Master Prompt Clean UI.</p>
+                  </div>
+
+                  {/* Master Prompt Constitution Badge */}
+                  <div className="p-3.5 bg-gradient-to-r from-emerald-50/90 via-[#FAF6EE] to-blue-50/90 border border-emerald-200/80 rounded-2xl flex items-center gap-3 shadow-2xs">
+                    <div className="w-8 h-8 rounded-xl bg-white shadow-xs flex items-center justify-center shrink-0 border border-emerald-200">
+                      <Sparkles className="w-4 h-4 text-emerald-700" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-emerald-950">Prinsip Master Prompt: Clean Design Over Decoration</p>
+                      <p className="text-[11px] text-emerald-800 leading-snug">Visual adaptif tanpa ornamen menumpuk, latar maksimal 2-3 lapis, whitespace lega, bebas confetti/glitter liar, dan fokus utama pada konten pembelajaran.</p>
+                    </div>
+                  </div>
+
+                  {/* Subject Selector */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-forest-900 uppercase flex items-center justify-between">
+                      <span>Mata Pelajaran</span>
+                      <span className="text-[10px] text-forest-700 font-normal">Pilih untuk adaptasi visual otomatis</span>
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                      {SUBJECT_OPTIONS.map((s) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => {
+                            setSubject(s.id);
+                            if (s.defaultTopic && (!topic.trim() || SUBJECT_OPTIONS.some(opt => opt.defaultTopic === topic))) {
+                              setTopic(s.defaultTopic);
+                              setLearningObjective(s.defaultObj);
+                              setAgeGroup(s.defaultAge);
+                            }
+                          }}
+                          className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2 ${
+                            subject === s.id 
+                              ? 'border-forest-700 bg-forest-50/80 text-forest-950 font-bold ring-2 ring-forest-200 shadow-2xs' 
+                              : 'border-neutral-200/80 hover:border-neutral-300 bg-neutral-50/40 text-neutral-700 hover:bg-neutral-50'
+                          }`}
+                        >
+                          <span className="text-base shrink-0">{s.icon}</span>
+                          <span className="text-xs truncate">{s.name.split(' (')[0]}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-forest-900 uppercase">Topik Materi</label>
+                    <label className="text-xs font-bold text-forest-900 uppercase">Topik / Judul Materi</label>
                     <input 
                       type="text"
                       value={topic}
                       onChange={(e) => setTopic(e.target.value)}
-                      placeholder="Contoh: Ekosistem Hutan atau Siklus Air Tanah..."
+                      placeholder="Contoh: Pecahan Senilai, Ekosistem Hutan, Kerajaan Singasari..."
                       className="w-full px-4 py-3 rounded-xl border border-neutral-200 focus:outline-hidden focus:ring-2 focus:ring-forest-700 focus:border-transparent bg-neutral-50/50 text-sm font-medium text-forest-950 placeholder:text-neutral-400"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-forest-900 uppercase flex items-center justify-between">
+                      <span>Tujuan Pembelajaran (Instructional Goal)</span>
+                      <span className="text-[10px] text-neutral-400 font-normal">Panduan Kognitif Materi</span>
+                    </label>
+                    <input 
+                      type="text"
+                      value={learningObjective}
+                      onChange={(e) => setLearningObjective(e.target.value)}
+                      placeholder="Contoh: Siswa mampu menganalisis konsep dan menerapkan pada studi kasus..."
+                      className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 focus:outline-hidden focus:ring-2 focus:ring-forest-700 focus:border-transparent bg-neutral-50/50 text-xs font-medium text-forest-950 placeholder:text-neutral-400"
                     />
                   </div>
 
@@ -1399,6 +1820,13 @@ export default function App() {
                       />
                     </label>
                   </div>
+
+                  {fileUploadError && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center justify-between">
+                      <span>⚠️ {fileUploadError}</span>
+                      <button onClick={() => setFileUploadError(null)} className="text-red-500 hover:text-red-700 font-bold ml-2">✕</button>
+                    </div>
+                  )}
 
                   {/* Upload Notification Success Banner with Confirmation Modal Trigger */}
                   {(uploadedFileName || extractedCleanText) && (
@@ -1485,14 +1913,18 @@ export default function App() {
                       {PRESET_TOPICS.map((preset, idx) => (
                         <button
                           key={idx}
+                          type="button"
                           onClick={() => handleSelectPreset(preset)}
-                          className="text-left p-3.5 rounded-xl border border-neutral-100 hover:border-forest-700/30 hover:bg-forest-50/30 transition-all cursor-pointer flex flex-col gap-1.5 group"
+                          className="text-left p-3.5 rounded-xl border border-neutral-100 hover:border-forest-700/40 hover:bg-forest-50/30 transition-all cursor-pointer flex flex-col gap-1.5 group bg-white shadow-2xs"
                         >
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-forest-900 group-hover:text-coral-600 transition-colors">{preset.title}</span>
                             <span className="text-[10px] bg-forest-100 text-forest-800 px-2 py-0.5 rounded-md font-semibold font-sans">{preset.age.split(' ')[0]}</span>
                           </div>
-                          <p className="text-[11px] text-neutral-500 truncate w-full">Struktur: {preset.pages.join(' → ')}</p>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200/70 px-1.5 py-0.5 rounded font-mono font-medium">{preset.subject}</span>
+                            <p className="text-[11px] text-neutral-500 truncate flex-1">{preset.objective || `Struktur: ${preset.pages.join(' → ')}`}</p>
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -1983,6 +2415,12 @@ export default function App() {
                             </div>
                           </div>
                         )}
+                        {mascotImageError && (
+                          <div className="mt-2 p-2.5 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center justify-between">
+                            <span>⚠️ {mascotImageError}</span>
+                            <button type="button" onClick={() => setMascotImageError(null)} className="text-red-500 hover:text-red-700 font-bold ml-2">✕</button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Bagian 2: 10-12 Rekomendasi Gaya Ilustrasi Karakter */}
@@ -2076,9 +2514,26 @@ export default function App() {
                   {/* Summary Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#FAF6EE]/50 rounded-2xl p-5 border border-[#F2EDE2]">
                     <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold uppercase text-neutral-400">Mata Pelajaran</span>
+                      <span className="text-xs font-bold text-forest-950 flex items-center gap-1.5">
+                        <span>{SUBJECT_OPTIONS.find(s => s.id === subject)?.icon}</span>
+                        <span>{subject}</span>
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
                       <span className="text-[10px] font-bold uppercase text-neutral-400">Topik Pembelajaran</span>
                       <span className="text-xs font-bold text-forest-950">{topic || "Belum Ditentukan"}</span>
                     </div>
+
+                    {learningObjective && (
+                      <div className="flex flex-col gap-1 col-span-1 md:col-span-2">
+                        <span className="text-[10px] font-bold uppercase text-neutral-400">Tujuan Pembelajaran</span>
+                        <span className="text-xs text-forest-900 bg-white/80 px-3 py-2 rounded-xl border border-neutral-100 leading-relaxed font-sans">
+                          {learningObjective}
+                        </span>
+                      </div>
+                    )}
 
                     <div className="flex flex-col gap-1">
                       <span className="text-[10px] font-bold uppercase text-neutral-400">Target Usia Siswa</span>
@@ -2265,6 +2720,9 @@ export default function App() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[10px] bg-coral-600 text-white font-mono px-2 py-0.5 rounded-md uppercase tracking-wider font-bold">
                       Selesai Dibuat
+                    </span>
+                    <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-purple-50 text-purple-900 border border-purple-200 font-semibold flex items-center gap-1">
+                      <span>{SUBJECT_OPTIONS.find(s => s.id === subject)?.icon || "📚"}</span> {subject}
                     </span>
                     <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 font-semibold flex items-center gap-1.5">
                       <span>✨</span> Detail: {DETAIL_LEVELS.find(d => d.id === detailLevel)?.name || detailLevel}

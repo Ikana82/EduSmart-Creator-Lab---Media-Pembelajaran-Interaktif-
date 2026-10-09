@@ -12,7 +12,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 const PORT = process.env.PORT || 3000;
 const IS_PROD = process.env.NODE_ENV === 'production' || process.env.VITE_PROD === 'true';
@@ -73,84 +74,277 @@ app.get('/api/api-status', (req: express.Request, res: express.Response) => {
   });
 });
 
-// API endpoint for generating prompts using Gemini 3.8 Flash (with 3.1 Flash Lite fallback)
+// Helper to determine clean adaptive theme based on subject & topic
+function getAdaptiveSubjectTheme(subject: string = '', topic: string = '') {
+  const text = `${subject} ${topic}`.toLowerCase();
+  if (text.includes('matematika') || text.includes('math') || text.includes('hitung') || text.includes('aljabar') || text.includes('geometri') || text.includes('pecahan')) {
+    return {
+      bg: "clean minimalist backdrop with subtle pale geometric grid lines and soft neutral slate tint",
+      elements: "crisp geometric shapes, mathematical symbols (+, -, ×, ÷), neatly formatted formulas, and clean coordinate diagrams",
+      palette: "slate navy, soft cobalt blue, and clean white with subtle warm amber accents",
+      canvaKeywords: "math education, clean geometry, minimalist mathematics, vector math icons"
+    };
+  }
+  if (text.includes('bahasa') || text.includes('literasi') || text.includes('indonesia') || text.includes('english') || text.includes('inggris') || text.includes('puisi') || text.includes('cerita')) {
+    return {
+      bg: "clean contemporary educational backdrop with soft beige-to-cream subtle gradient and warm study nook aesthetic",
+      elements: "clean open book icon, readable typography cards, and crisp speech dialogue bubbles",
+      palette: "warm terracotta, soft ivory, navy, and muted sage green",
+      canvaKeywords: "reading literacy, clean book illustration, language education, minimalist classroom"
+    };
+  }
+  if (text.includes('ips') || text.includes('sejarah') || text.includes('geografi') || text.includes('sosial') || text.includes('peta') || text.includes('budaya')) {
+    return {
+      bg: "clean minimalist backdrop with subtle pale topographic map lines and warm neutral tones",
+      elements: "clean stylized thematic map, navigational compass icon, and cultural heritage infographic cards",
+      palette: "warm sand, olive, deep indigo, and burnt orange",
+      canvaKeywords: "social studies, clean geography map, history infographic, cultural heritage"
+    };
+  }
+  if (text.includes('pai') || text.includes('agama') || text.includes('moral') || text.includes('akhlak')) {
+    return {
+      bg: "serene peaceful backdrop with soft subtle mint-teal gradient and clean architectural arch lines",
+      elements: "neatly arranged values chart, book stand motif, and calm educational symbols",
+      palette: "emerald green, warm gold, clean white, and soft teal",
+      canvaKeywords: "islamic education, serene clean background, moral values, peaceful classroom"
+    };
+  }
+  if (text.includes('informatika') || text.includes('komputer') || text.includes('coding') || text.includes('tik') || text.includes('teknologi')) {
+    return {
+      bg: "clean modern tech backdrop with subtle pale cyan gradient and minimalist circuit node lines",
+      elements: "stylized clean monitor card, binary flow diagram, and crisp digital UI elements",
+      palette: "clean slate, electric cyan, white, and deep charcoal",
+      canvaKeywords: "computer science, coding education, tech UI, clean infographic"
+    };
+  }
+  if (text.includes('paud') || text.includes('tk') || text.includes('balita')) {
+    return {
+      bg: "clean cheerful soft pastel gradient with very simple rounded cloud shapes and ample negative space",
+      elements: "large concrete friendly shapes, colorful alphabet blocks, and high contrast items",
+      palette: "soft butter yellow, sky blue, peach, and crisp white",
+      canvaKeywords: "preschool education, cute simple shapes, kindergarten pastel, clean learning"
+    };
+  }
+  // Default IPAS / Science or general topic
+  return {
+    bg: `clean minimalist background with soft gentle gradient and subtle contextual atmospheric cues tailored to "${topic}"`,
+    elements: `clear educational diagrams and thematic visual references for "${topic}"`,
+    palette: "forest green, pastel sky blue, sunny gold, and crisp white",
+    canvaKeywords: `${topic.toLowerCase()}, science education, clean vector illustration, presentation slide`
+  };
+}
+
+// Server-side fallback prompt generator strictly following Master Prompt rules
+function generateServerFallbackPrompts(payload: any) {
+  const { subject = 'IPAS / Sains', topic, ageGroup, pages, layout, visualStyle = 'Clean 2D Vector / Flat Cartoon', detailLevel = 'clean-minimalis', mascot } = payload;
+  const theme = getAdaptiveSubjectTheme(subject, topic);
+  const aspect = layout === 'portrait' ? '9:16 vertical portrait' : '16:9 landscape';
+
+  let characterClause = "Left side features a friendly, smiling tutor character gesturing politely towards the content";
+  if (mascot?.type === 'none') {
+    characterClause = "Minimalist presentation slide UI focused purely on core diagrams and lesson content without mascot characters";
+  } else if (mascot?.type === 'custom' && mascot?.imageName) {
+    characterClause = `Left side features a friendly tutor character inspired by the reference photo ("${mascot.imageName}", ${mascot?.description || 'tutor companion'}), smiling and gesturing towards the slide content without obstructing text`;
+  } else if (mascot?.description) {
+    characterClause = `Left side features a friendly educational companion (${mascot.description}) smiling politely and gesturing towards the lesson content`;
+  }
+
+  const detailClause = "Ultra-clean minimalist composition, generous negative space (ample whitespace), zero visual clutter, neat rounded white card container with subtle soft drop shadow, high text contrast, no floating confetti or glitter particles, content-first layout";
+
+  return pages.map((pageTitle: string, index: number) => {
+    const titleLower = pageTitle.toLowerCase();
+    let headerText = pageTitle;
+    let slideSpecific = "";
+    let quizData: any = undefined;
+
+    if (titleLower.includes('cover') || titleLower.includes('sampul')) {
+      headerText = topic || "Media Pembelajaran Interaktif";
+      slideSpecific = `Center displays a clean, prominent title banner reading "${topic}" with subtitle "${subject} - ${ageGroup}". Background features ${theme.bg}. Bottom center has a clean, tactile rounded action button "MULAI BELAJAR". Content-first layout with balanced margins.`;
+    } else if (titleLower.includes('navigasi') || titleLower.includes('menu')) {
+      headerText = "Pilih Menu Belajar";
+      slideSpecific = `Displays two neat, modular white rounded card buttons with clean icons: "Tujuan Pembelajaran" and "Kuis Interaktif". Spacious layout, high contrast readability. Background features ${theme.bg}.`;
+    } else if (titleLower.includes('tujuan') || titleLower.includes('indikator')) {
+      headerText = "Tujuan Pembelajaran";
+      slideSpecific = `Right side features a large clean white rounded card container with 3 neatly organized checklist items explaining learning goals for "${topic}". Ample negative space, high contrast typography. Background features ${theme.bg}.`;
+    } else if (titleLower.includes('apersepsi') || titleLower.includes('pengantar') || titleLower.includes('motivasi')) {
+      headerText = "Tahukah Kamu? Mari Mengamati";
+      slideSpecific = `Center displays a clean educational focal visual representing "${topic}" on a neat pedestal. Tutor character points thoughtfully with an encouraging expression. Background features ${theme.bg}.`;
+    } else if (titleLower.includes('peta') || titleLower.includes('perjalanan') || titleLower.includes('titik kuis')) {
+      headerText = "Peta Petualangan 4 Titik Kuis";
+      slideSpecific = `Features a neat, minimalist progress trail connecting 4 clean numbered checkpoint badges (1, 2, 3, 4) across the screen. Clutter-free design with clear visual hierarchy. Background features ${theme.bg}.`;
+    } else if (titleLower.includes('kuis 1') || titleLower.includes('penyerbukan') || index === 5) {
+      headerText = `Kuis 1: Konsep Dasar ${topic}`;
+      quizData = {
+        question: `Pertanyaan pemahaman konsep inti pertama mengenai materi ${topic}?`,
+        options: ["A. Opsi konsep yang tepat dan logis", "B. Opsi pengecoh pertama", "C. Opsi pengecoh kedua", "D. Opsi pengecoh ketiga"],
+        correctAnswer: "A",
+        explanation: `Pemahaman mendasar materi ${topic} sangat penting sebagai fondasi kognitif siswa.`
+      };
+      slideSpecific = `Right side features a large clean white rounded card container displaying the question clearly and 4 neat horizontal option cards with circular letter badges (A, B, C, D). Left side features ${characterClause}. Background features ${theme.bg}.`;
+    } else if (titleLower.includes('kuis 2') || index === 6) {
+      headerText = `Kuis 2: Karakteristik & Ciri Khusus`;
+      quizData = {
+        question: `Manakah karakteristik yang paling sesuai dengan prinsip ${topic}?`,
+        options: ["A. Karakteristik umum", "B. Karakteristik spesifik dan tepat", "C. Karakteristik acak", "D. Karakteristik tidak relevan"],
+        correctAnswer: "B",
+        explanation: `Karakteristik spesifik menjelaskan fenomena atau aturan dalam topik ini dengan tepat.`
+      };
+      slideSpecific = `Right side features a large clean white rounded card container with question header and 4 clean horizontal option pills with letter badges (A, B, C, D). Left side features ${characterClause}. Background features ${theme.bg}.`;
+    } else if (titleLower.includes('kuis 3') || index === 7) {
+      headerText = `Kuis 3: Analisis & Penerapan`;
+      quizData = {
+        question: `Bagaimana penerapan konsep ${topic} dalam kehidupan sehari-hari?`,
+        options: ["A. Penerapan relevan dan benar", "B. Penerapan yang kurang tepat", "C. Tidak ada kaitan", "D. Hanya teori"],
+        correctAnswer: "A",
+        explanation: `Penerapan konsep membantu siswa menghubungkan materi kelas dengan realitas dunia nyata.`
+      };
+      slideSpecific = `Right side features a large clean white rounded card container with question and 4 neat multiple-choice cards (A, B, C, D). Clean grid layout, high legibility. Background features ${theme.bg}.`;
+    } else if (titleLower.includes('kuis 4') || index === 8) {
+      headerText = `Kuis 4: Evaluasi & Kesimpulan`;
+      quizData = {
+        question: `Apa kesimpulan utama yang dapat ditarik dari topik ${topic}?`,
+        options: ["A. Kesimpulan parsial", "B. Kesimpulan komprehensif yang tepat", "C. Hipotesis yang belum terbukti", "D. Fakta di luar topik"],
+        correctAnswer: "B",
+        explanation: `Evaluasi menyeluruh memantapkan pemahaman siswa terhadap keseluruhan topik.`
+      };
+      slideSpecific = `Right side features a large clean white rounded card container with question and 4 tidy option cards with circular badges (A, B, C, D). Background features ${theme.bg}.`;
+    } else if (titleLower.includes('respon benar') || titleLower.includes('benar')) {
+      headerText = "Luar Biasa! Jawabanmu Benar Sekali ⭐⭐⭐";
+      slideSpecific = `Center displays three clean golden achievement stars and a tidy green success badge "JAWABAN TEPAT!". Tutor character gives a cheerful thumbs up. Bottom features a tactile rounded button "Lanjut ke Soal Berikutnya". No messy confetti, clean uncluttered layout. Background features ${theme.bg}.`;
+    } else if (titleLower.includes('respon salah') || titleLower.includes('salah')) {
+      headerText = "Hampir Tepat! Yuk Pikirkan Lagi 💡";
+      slideSpecific = `Tutor character with a warm encouraging smile holding a clean glowing lightbulb motif, with a friendly clean speech bubble "Ayo Coba Lagi, Kamu Pasti Bisa!". Clean white rounded card offering buttons "Lihat Petunjuk" dan "Ulangi Soal". Background features ${theme.bg}.`;
+    } else if (titleLower.includes('rangkuman') || titleLower.includes('summary')) {
+      headerText = "Rangkuman / Intisari Materi";
+      slideSpecific = `Center displays a large clean white rounded board container organized into 3-4 structured modular cards highlighting core takeaways of "${topic}". Clean typography, clear visual hierarchy. Background features ${theme.bg}.`;
+    } else if (titleLower.includes('penutup') || titleLower.includes('selesai')) {
+      headerText = "Selamat! Misi Belajar Selesai 🎓";
+      slideSpecific = `Center displays a cheerful, elegant congratulations card celebrating completion of "${topic}". Tutor waving politely next to a neat diploma badge. Prominent clean rounded action button "SELESAI & ULANGI". Background features ${theme.bg}.`;
+    } else {
+      slideSpecific = `Right side features a large clean white rounded card container with generous whitespace displaying key concepts of "${pageTitle}". Left side has ${characterClause}. Background features ${theme.bg}.`;
+    }
+
+    const cleanPrompt = `Clean educational presentation slide UI, ${aspect} aspect ratio. Style: ${visualStyle}. ${characterClause}. ${slideSpecific}. ${detailClause}. Soft ambient studio lighting, sharp focus, 8k resolution, UI/UX educational presentation mockup.`;
+    const midjourneyPrompt = `${cleanPrompt} --ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw`;
+
+    const structuredSpec = `📐 Layout: ${layout === 'portrait' ? '9:16 Portrait (1080x1920 px)' : '16:9 Landscape (1920x1080 px)'}
+📚 Mata Pelajaran: ${subject} | Materi: "${topic}"
+✨ Tingkat Detail: ${detailLevel} (Clean, Minimal, Anti-Clutter)
+🎨 Gaya Visual: ${visualStyle}
+🌿 Latar Belakang: ${theme.bg}
+🧑‍🎓 Karakter: ${characterClause}
+📄 Kartu Konten: Kontainer kartu putih rounded bersih dengan drop shadow lembut dan whitespace lega (Content-First Design).
+🔘 Tombol: Tombol taktil rounded kontras di bagian bawah slide.
+🎨 Palet Warna: ${theme.palette}
+🔍 Kata Kunci Canva: ${theme.canvaKeywords}`;
+
+    return {
+      pageTitle: `Halaman ${index + 1}: ${pageTitle}`,
+      headerText: headerText,
+      cleanPrompt: cleanPrompt,
+      midjourneyPrompt: midjourneyPrompt,
+      illustrationDesc: structuredSpec,
+      canvaKeywords: theme.canvaKeywords,
+      navigationButtons: index === 0 ? "MULAI BELAJAR!" : index === pages.length - 1 ? "SELESAI & ULANGI" : "LANJUT",
+      estimatedTime: "1-2 Menit",
+      educationalObjective: `Menyajikan konten esensial untuk sub-materi "${pageTitle}" dengan visual clean dan keterbacaan tinggi.`,
+      quizData: quizData
+    };
+  });
+}
+
+// API endpoint for generating prompts using Gemini 3.8 Flash (with safe local fallback)
 app.post('/api/generate-prompts', async (req: express.Request, res: express.Response) => {
-  const { topic, ageGroup, pages, layout, visualStyle, detailLevel, language, mascot } = req.body;
+  const { subject = 'IPAS / Sains', topic, ageGroup, learningObjective, pages, layout, visualStyle, detailLevel, language, mascot } = req.body;
 
   if (!topic || !ageGroup || !pages || !Array.isArray(pages)) {
     return res.status(400).json({ error: 'Data input tidak lengkap. Harap isi topik, target usia, dan daftar halaman.' });
   }
 
+  // If Gemini API is not configured, generate ultra-clean prompts with the server-side engine
   if (!ai) {
-    return res.status(503).json({
-      error: 'Layanan AI belum siap karena kunci API (GEMINI_API_KEY) belum dikonfigurasi pada setelan server. Silakan hubungkan API Key Anda.'
+    const fallbackPrompts = generateServerFallbackPrompts(req.body);
+    return res.json({ 
+      prompts: fallbackPrompts, 
+      usedModel: 'edusmart-clean-engine',
+      isLocalFallback: true,
+      notice: 'Prompts dirumuskan menggunakan Mesin Generator EduSmart Clean & Minimalis.' 
     });
   }
 
   try {
     const pageListStr = pages.map((p: string, i: number) => `Halaman ${i + 1}: ${p}`).join('\n');
-    const mascotText = mascot.type === 'none' 
+    const mascotText = mascot?.type === 'none' 
       ? 'Tanpa Maskot (Fokus murni diagram edukatif bersih)' 
-      : mascot.type === 'custom' && mascot.imageName
-        ? `Karakter Kustom Berdasarkan Foto Unggahan Guru ("${mascot.imageName}"). Deskripsi: ${mascot.description || 'Karakter pendamping tutor ramah yang konsisten dengan foto referensi'}. Pastikan konsistensi ciri visual karakter di setiap slide.`
-        : `Jenis Maskot: ${mascot.type}. Deskripsi Maskot: ${mascot.description || 'Karakter pendamping edukatif yang lucu dan ramah (tutor cilik/hewan pintar/guru kartun).'}`;
+      : mascot?.type === 'custom' && mascot?.imageName
+        ? `Karakter Kustom Berdasarkan Foto Unggahan Guru ("${mascot.imageName}"). Deskripsi: ${mascot.description || 'Karakter pendamping tutor ramah yang konsisten dengan foto referensi'}. Pastikan konsistensi ciri visual karakter di setiap slide tanpa menutupi kartu materi.`
+        : `Jenis Maskot: ${mascot?.type || 'tutor'}. Deskripsi: ${mascot?.description || 'Karakter pendamping edukatif yang ramah dan sopan'}.`;
 
     const effectiveDetail = detailLevel || 'clean-minimalis';
 
-    const systemInstruction = `Anda adalah Senior Educational UI/UX Designer, Instructional Designer, dan AI Image Prompt Engineer terkemuka.
-Tugas Anda adalah merancang teks prompt gambar (AI Image Prompt) yang SANGAT BERSIH (ULTRA-CLEAN), RAPI, dan PROFESIONAL seperti slide media pembelajaran interaktif modern (layout 16:9 landscape atau 9:16 portrait).
+    const systemInstruction = `Anda adalah Senior Educational UI/UX Designer, Instructional Designer, dan Visual Designer yang ahli merancang media pembelajaran digital interaktif yang clean, rapi, profesional, menarik, dan mudah dipahami siswa.
 
-Input Desain:
-- Topik: "${topic}"
-- Target Usia Siswa: ${ageGroup}
-- Struktur Halaman yang diminta:
+Tugas Anda adalah merancang teks prompt gambar (AI Image Prompt) untuk setiap slide media pembelajaran interaktif berdasarkan mata pelajaran, topik materi, jenjang pendidikan, tujuan pembelajaran, dan preferensi pengguna.
+
+PRINSIP UTAMA: CLEAN DESIGN OVER DECORATION.
+Setiap elemen visual harus mempunyai fungsi yang jelas. Jangan menambahkan dekorasi hanya untuk mengisi ruang kosong. Konten pembelajaran adalah fokus utama (Content-First Design).
+
+INPUT DESAIN:
+- Mata Pelajaran: "${subject}"
+- Judul & Topik: "${topic}"
+- Jenjang Pendidikan & Target Usia: ${ageGroup}
+- Tujuan Pembelajaran: ${learningObjective || `Memahami konsep inti materi ${topic}`}
+- Struktur Halaman:
 ${pageListStr}
 - Tata Letak: ${layout === 'portrait' ? '9:16 (Portrait)' : '16:9 (Landscape)'}
-- Gaya Visual & Estetika: ${visualStyle}
-- Tingkat Detail Visual: ${effectiveDetail === 'clean-minimalis' ? 'Clean Minimalis (Latar sederhana, sedikit ornamen, ikon jelas, kartu rounded bersih, whitespace lega, fokus pada keterbacaan)' : effectiveDetail === '3d-premium' ? '3D Premium (Karakter 3D berkilau, pencahayaan lembut studio, kartu translucent modern)' : effectiveDetail === '3d-detail-tinggi' ? '3D Detail Tinggi (Tekstur terperinci, karakter ekspresif, tetap rapi)' : 'Adaptif Otomatis'}
+- Gaya Visual yang dipilih: ${visualStyle}
+- Tingkat Detail Visual: ${effectiveDetail}
 - Bahasa Pengantar: ${language}
 - Karakter/Maskot: ${mascotText}
 
-STANDAR KOMPOSISI VISUAL BERSIH (SESUAI GAMBAR CONTOH / USER REFERENCE):
-1. CLEAN PROMPT (Teks Prompt Bahasa Inggris Murni Tanpa Label Form):
-   - WAJIB dalam bahasa Inggris yang mengalir alami dan siap langsung ditempel ke Canva Magic Media, Midjourney v6, DALL-E 3, atau Imagen 3.
-   - DILARANG menyertakan label form administratif seperti "Ukuran:", "Style:", "Background Environment:", "Center Subject / Graphic:", "Header Text:", dsb. karena label teks tersebut akan merusak hasil generator AI dan membuat gambar menjadi acak-acakan.
-   - Komposisi wajib mengikuti prinsip UI slide presentasi bersih:
-     * Rasio: ${layout === 'portrait' ? '9:16 portrait ratio' : '16:9 landscape ratio'}
-     * Karakter pendamping: di sisi kiri atau sudut, berpose ramah, tersenyum, menyapa atau menunjuk ke arah materi.
-     * Kartu konten utama: kartu putih bersih dengan sudut melengkung lembut (large clean white rounded card container, subtle soft drop shadow) dengan whitespace/ruang kosong yang lapang.
-     * Latar pemandangan/lingkungan: latar lembut yang tenang (seperti perbukitan hijau kartun lembut, langit cerah dengan awan 3D clay halus, dan sentuhan elemen sesuai topik "${topic}").
-     * Tombol interaktif: tombol taktil melengkung mengilap di bagian bawah (glossy rounded action button).
-     * Estetika: uncluttered, minimalist composition, ample negative space, high legibility, soft studio ambient lighting, 8k resolution, UI/UX educational presentation slide mockup.
+ATURAN ADAPTASI MATA PELAJARAN DAN TEMA (SANGAT KETAT):
+1. Seluruh desain WAJIB menyesuaikan materi yang dimasukkan pengguna.
+2. DILARANG menggunakan latar hutan, bunga, matahari, atau awan clay secara otomatis jika mata pelajaran atau materinya tidak relevan (misal: Matematika, Fisika, Bahasa Indonesia, Sejarah, PPKn)!
+   - Matematika: angka, simbol matematika, bangun geometri, grafik, bidang koordinat, objek berhitung. Latar bersih netral atau grid bergaris halus.
+   - Bahasa Indonesia: buku, teks literasi, kartu dialog, karakter cerita kontekstual. Latar sudut baca modern atau ruang literasi hangat yang tenang.
+   - IPAS/IPA: fenomena alam, eksperimen lab, diagram anatomi/ekosistem sesuai spesifik materi ${topic}.
+   - IPS/Sejarah: peta tematik, artefak sejarah, infografis sosial budaya, aktivitas masyarakat.
+   - PAI: ilustrasi edukatif santun, ornamen nilai moral bersahaja, suasana teduh dan teratur.
+   - TK/PAUD: objek konkret, bentuk sederhana, warna cerah harmonis, teks sangat singkat, maskot ramah.
+   - SMP/SMA: desain lebih matang, diagram analitis, skema terstruktur, akademis, tanpa nuansa kekanak-kanakan.
 
-2. MIDJOURNEY PROMPT:
-   - Teks cleanPrompt yang diakhiri parameter rasio: "--ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw"
+ATURAN VISUAL STYLE & STRICT CLEAN LAYOUT:
+1. Visual Style:
+   - Clean 3D cartoon atau clean 2D illustration (sesuai pilihan: ${visualStyle}).
+   - Bentuk sederhana dengan siluet jelas, warna harmonis (3-5 warna utama), pencahayaan lembut (soft ambient studio lighting), bayangan tipis dan terkendali.
+   - Tekstur minimal. DILARANG efek clay berlebihan, tekstur kain kasar, outline tebal acak-acakan, bevel berlebihan, atau glossy berlebihan.
+2. Background:
+   - Latar sederhana dengan maksimal 2 atau 3 lapisan visual.
+   - Warna solid, gradasi lembut, atau backdrop lingkungan minimalis yang tidak berebut perhatian dengan teks.
+   - Kontras tinggi dengan panel kartu konten.
+3. Dekorasi:
+   - Dekorasi seminimal mungkin! DILARANG confetti, daun beterbangan, bunga berulang, taburan bintang, kilauan liar (glitter sparkles), garis gerak komik, atau ornamen melayang tanpa makna.
+   - Maksimal 3 ornamen kecil fungsional per slide.
+4. Komposisi & Card Container:
+   - Panel kartu konten utama: kontainer kartu putih rounded bersih (clean white rounded modular card container, subtle soft shadow, ample whitespace).
+   - Penempatan karakter: di sisi tepi/kiri, berpose ramah menyapa atau menunjuk materi, TIDAK MENUTUPI materi atau kartu konten.
+   - Tombol: tombol aksi taktil rounded dengan kontras jelas di bagian bawah.
 
-3. DESKRIPSI SPESIFIKASI MANUAL (illustrationDesc):
-   - Panduan bahasa Indonesia terstruktur yang rapi untuk guru yang ingin merakit slide secara manual di Canva atau PowerPoint:
-     Layout: ... | Karakter: ... | Kartu Konten: ... | Tombol: ... | Palet Warna: ...
+OUTPUT FORMAT UNTUK SETIAP SLIDE:
+1. cleanPrompt: Prompt bahasa Inggris murni yang mengalir alami, siap paste langsung ke Midjourney v6, Canva Magic Media, Imagen 3, atau DALL-E 3.
+   - DILARANG mencantumkan label administratif seperti "Style:", "Layout:", "Background:", "Header Text:".
+   - Wajib menyertakan aspek rasio: ${layout === 'portrait' ? '9:16 portrait ratio' : '16:9 landscape ratio'}.
+2. midjourneyPrompt: cleanPrompt + " --ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw"
+3. illustrationDesc: Panduan spesifikasi tata letak manual bahasa Indonesia (Layout, Latar, Kartu Konten, Karakter, Tombol, Palet Warna).
+4. canvaKeywords: 3-5 kata kunci pencarian aset Canva bahasa Inggris relevan.
+5. navigationButtons, estimatedTime, educationalObjective, dan quizData (jika halaman kuis).`;
 
-4. QUIZ DATA:
-   - Jika halaman adalah kuis (Kuis 1-4), sertakan soal pilihan ganda relevan lengkap dengan 4 opsi, kunci jawaban (A/B/C/D), dan penjelasan mendidik.
-
-Kembalikan dalam struktur JSON ARRAY objek:
-- pageTitle (string)
-- headerText (string)
-- cleanPrompt (string: prompt bahasa Inggris murni siap paste ke AI image generator)
-- midjourneyPrompt (string: cleanPrompt + parameter Midjourney)
-- illustrationDesc (string: panduan spesifikasi tata letak manual bahasa Indonesia)
-- canvaKeywords (string: 3-5 kata kunci pencarian Canva bahasa Inggris)
-- navigationButtons (string)
-- estimatedTime (string)
-- educationalObjective (string)
-- quizData (opsional: objek kuis pilihan ganda)`;
-
-    const contents = `Tolong buatkan visual prompt ultra-clean siap pakai untuk media pembelajaran "${topic}".
+    const contents = `Tolong rancang prompt visual ultra-clean edukatif untuk media pembelajaran mata pelajaran "${subject}", materi "${topic}".
 Daftar halaman:
 ${pageListStr}
 
-Pastikan teks cleanPrompt sangat bersih dan menghasilkan estetika presentasi slide UI dengan whitespace lega dan kartu rounded rapi.
-Harap berikan respons dalam bentuk JSON Array valid.`;
+Pastikan teks cleanPrompt sangat rapi, mengutamakan whitespace, kartu modular bersih, dan bebas dari dekorasi berlebih (no clutter, no confetti).
+Harap kembalikan dalam struktur JSON Array valid.`;
 
     const { response, usedModel } = await callGeminiWithFallback(ai, {
       contents: contents,
@@ -201,9 +395,14 @@ Harap berikan respons dalam bentuk JSON Array valid.`;
     return res.json({ prompts: parsedPrompts, usedModel: usedModel });
 
   } catch (err: any) {
-    console.error('Error generating prompts via Gemini:', err);
-    return res.status(500).json({ 
-      error: `Gagal membuat prompt via AI: ${err.message || 'Kesalahan sistem internal.'}. Anda tetap bisa menggunakan mode generator manual gratis kami.`
+    console.warn('Gemini call fell back to server clean generator:', err?.message || err);
+    // Provide seamless fallback so users never see broken errors
+    const fallbackPrompts = generateServerFallbackPrompts(req.body);
+    return res.json({ 
+      prompts: fallbackPrompts, 
+      usedModel: 'edusmart-clean-engine',
+      isLocalFallback: true,
+      notice: `Prompt dibuat dengan Mesin EduSmart Clean (${err.message || 'Mode Mandiri'}).` 
     });
   }
 });
@@ -320,6 +519,13 @@ Hasilkan JSON dengan format:
   }
 });
 
+// Explicit 404 for any unhandled /api/* routes so they never return HTML
+app.all('/api/*', (req, res) => {
+  res.status(404).json({
+    error: `Endpoint API "${req.method} ${req.path}" tidak ditemukan pada server.`
+  });
+});
+
 // Serve frontend build or mount Vite dev middleware
 if (!IS_PROD) {
   const { createServer: createViteServer } = await import('vite');
@@ -331,6 +537,9 @@ if (!IS_PROD) {
   app.use(vite.middlewares);
   
   app.use('*', async (req, res, next) => {
+    if (req.originalUrl.startsWith('/api')) {
+      return next();
+    }
     const url = req.originalUrl;
     try {
       const rawHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf-8');
@@ -342,9 +551,18 @@ if (!IS_PROD) {
     }
   });
 } else {
-  app.use(express.static(path.join(__dirname, 'dist')));
+  const distPath = path.join(__dirname, 'dist');
+  app.use(express.static(distPath));
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ error: 'Endpoint API tidak ditemukan.' });
+    }
+    const indexPath = path.join(distPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.sendFile(path.join(__dirname, 'index.html'));
+    }
   });
 }
 
