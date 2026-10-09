@@ -181,150 +181,23 @@ function parseDataUrl(dataUrl: string) {
   };
 }
 
+import { buildSlideIdentity, getSubjectAdaptiveDetails } from './src/utils/slidePromptEngine.js';
+
 // Server-side fallback prompt generator strictly following Master Prompt rules
 function generateServerFallbackPrompts(payload: any) {
-  const { subject = 'IPAS / Sains', topic, ageGroup, pages, layout, visualStyle = 'Clean 2D Vector / Flat Cartoon', detailLevel = 'clean-minimalis', mascot } = payload;
-  const theme = getAdaptiveSubjectTheme(subject, topic);
-  const aspect = layout === 'portrait' ? '9:16 vertical portrait' : '16:9 landscape';
-
-
-  let characterClause = "Left side features a friendly, smiling tutor character gesturing politely towards the content";
-  if (mascot?.type === 'none') {
-    characterClause = "Minimalist presentation slide UI focused purely on core diagrams and lesson content without mascot characters";
-  } else if (mascot?.type === 'custom' && mascot?.imageName) {
-    characterClause = `Left side features a friendly tutor character inspired by the reference photo ("${mascot.imageName}", ${mascot?.description || 'tutor companion'}), smiling and gesturing towards the slide content without obstructing text`;
-  } else if (mascot?.description) {
-    characterClause = `Left side features a friendly educational companion (${mascot.description}) smiling politely and gesturing towards the lesson content`;
-  }
-
-  const detailClause = "Ultra-clean minimalist composition, generous negative space (ample whitespace), zero visual clutter, neat rounded white card container with subtle soft drop shadow, high text contrast, no floating confetti or glitter particles, content-first layout";
+  const { subject = 'IPAS / Sains', topic = 'Ekosistem & Rantai Makanan', ageGroup = 'SD Kelas Tinggi (9-11 tahun)', pages = [], layout = 'landscape', visualStyle = 'Flat Cartoon / 2D Vector Education', detailLevel = 'clean-minimalis', mascot } = payload;
 
   return pages.map((pageTitle: string, index: number) => {
-    const titleLower = pageTitle.toLowerCase();
-    let headerText = pageTitle;
-    let slideSpecific = "";
-    let quizData: any = undefined;
-
-    if (titleLower.includes('cover') || titleLower.includes('sampul')) {
-      headerText = topic || "Media Pembelajaran Interaktif";
-      slideSpecific = `Center displays a clean, prominent title banner reading "${topic}" with subtitle "${subject} - ${ageGroup}". Background features ${theme.bg}. Bottom center has a clean, tactile rounded action button "MULAI BELAJAR". Content-first layout with balanced margins.`;
-    } else if (titleLower.includes('navigasi') || titleLower.includes('menu')) {
-      headerText = "Pilih Menu Belajar";
-      slideSpecific = `Main menu navigation board. Displays six neat, modular white rounded card buttons organized in a balanced grid layout with clean matching icons: "1. Petunjuk" (icon: info/guide), "2. Apersepsi" (icon: lightbulb), "3. Peta / Mapping" (icon: map), "4. Materi" (icon: book), "5. Video" (icon: play), and "6. Kuis" (icon: game controller). Outstanding spacious layout, high contrast readability, clean typography. Highlighting 'Menu Navigasi' as the current active step in this lesson journey. Background features ${theme.bg}.`;
-    } else if (titleLower.includes('tujuan') || titleLower.includes('indikator')) {
-      headerText = "Tujuan Pembelajaran";
-      slideSpecific = `Right side features a large clean white rounded card container with 3 neatly organized checklist items explaining learning goals for "${topic}". Ample negative space, high contrast typography. Background features ${theme.bg}.`;
-    } else if (titleLower.includes('apersepsi') || titleLower.includes('pengantar') || titleLower.includes('motivasi')) {
-      headerText = "Tahukah Kamu? Mari Mengamati";
-      slideSpecific = `Center displays a clean educational focal visual representing "${topic}" on a neat pedestal. Tutor character points thoughtfully with an encouraging expression. Background features ${theme.bg}.`;
-    } else if (titleLower.includes('peta') || titleLower.includes('perjalanan') || titleLower.includes('titik kuis')) {
-      headerText = "Peta Petualangan 4 Titik Kuis";
-      slideSpecific = `Features a neat, minimalist progress trail connecting 4 clean numbered checkpoint badges (1, 2, 3, 4) across the screen. Clutter-free design with clear visual hierarchy. Background features ${theme.bg}.`;
-    } else if (titleLower.includes('kuis 1') || titleLower.includes('penyerbukan') || index === 5) {
-      headerText = `Kuis 1: Konsep Dasar ${topic}`;
-      quizData = {
-        question: `Pertanyaan pemahaman konsep inti pertama mengenai materi ${topic}?`,
-        options: ["A. Opsi konsep yang tepat dan logis", "B. Opsi pengecoh pertama", "C. Opsi pengecoh kedua", "D. Opsi pengecoh ketiga"],
-        correctAnswer: "A",
-        explanation: `Pemahaman mendasar materi ${topic} sangat penting sebagai fondasi kognitif siswa.`
-      };
-      slideSpecific = `Right side features a large clean white rounded card container displaying the question clearly and 4 neat horizontal option cards with circular letter badges (A, B, C, D). Left side features ${characterClause}. Background features ${theme.bg}.`;
-    } else if (titleLower.includes('kuis 2') || index === 6) {
-      headerText = `Kuis 2: Karakteristik & Ciri Khusus`;
-      quizData = {
-        question: `Manakah karakteristik yang paling sesuai dengan prinsip ${topic}?`,
-        options: ["A. Karakteristik umum", "B. Karakteristik spesifik dan tepat", "C. Karakteristik acak", "D. Karakteristik tidak relevan"],
-        correctAnswer: "B",
-        explanation: `Karakteristik spesifik menjelaskan fenomena atau aturan dalam topik ini dengan tepat.`
-      };
-      slideSpecific = `Right side features a large clean white rounded card container with question header and 4 clean horizontal option pills with letter badges (A, B, C, D). Left side features ${characterClause}. Background features ${theme.bg}.`;
-    } else if (titleLower.includes('kuis 3') || index === 7) {
-      headerText = `Kuis 3: Analisis & Penerapan`;
-      quizData = {
-        question: `Bagaimana penerapan konsep ${topic} dalam kehidupan sehari-hari?`,
-        options: ["A. Penerapan relevan dan benar", "B. Penerapan yang kurang tepat", "C. Tidak ada kaitan", "D. Hanya teori"],
-        correctAnswer: "A",
-        explanation: `Penerapan konsep membantu siswa menghubungkan materi kelas dengan realitas dunia nyata.`
-      };
-      slideSpecific = `Right side features a large clean white rounded card container with question and 4 neat multiple-choice cards (A, B, C, D). Clean grid layout, high legibility. Background features ${theme.bg}.`;
-    } else if (titleLower.includes('kuis 4') || index === 8) {
-      headerText = `Kuis 4: Evaluasi & Kesimpulan`;
-      quizData = {
-        question: `Apa kesimpulan utama yang dapat ditarik dari topik ${topic}?`,
-        options: ["A. Kesimpulan parsial", "B. Kesimpulan komprehensif yang tepat", "C. Hipotesis yang belum terbukti", "D. Fakta di luar topik"],
-        correctAnswer: "B",
-        explanation: `Evaluasi menyeluruh memantapkan pemahaman siswa terhadap keseluruhan topik.`
-      };
-      slideSpecific = `Right side features a large clean white rounded card container with question and 4 tidy option cards with circular badges (A, B, C, D). Background features ${theme.bg}.`;
-    } else if (titleLower.includes('respon benar') || titleLower.includes('benar')) {
-      headerText = "Luar Biasa! Jawabanmu Benar Sekali ⭐⭐⭐";
-      slideSpecific = `Center displays three clean golden achievement stars and a tidy green success badge "JAWABAN TEPAT!". Tutor character gives a cheerful thumbs up. Bottom features a tactile rounded button "Lanjut ke Soal Berikutnya". No messy confetti, clean uncluttered layout. Background features ${theme.bg}.`;
-    } else if (titleLower.includes('respon salah') || titleLower.includes('salah')) {
-      headerText = "Hampir Tepat! Yuk Pikirkan Lagi 💡";
-      slideSpecific = `Tutor character with a warm encouraging smile holding a clean glowing lightbulb motif, with a friendly clean speech bubble "Ayo Coba Lagi, Kamu Pasti Bisa!". Clean white rounded card offering buttons "Lihat Petunjuk" dan "Ulangi Soal". Background features ${theme.bg}.`;
-    } else if (titleLower.includes('rangkuman') || titleLower.includes('summary')) {
-      headerText = "Rangkuman / Intisari Materi";
-      slideSpecific = `Center displays a large clean white rounded board container organized into 3-4 structured modular cards highlighting core takeaways of "${topic}". Clean typography, clear visual hierarchy. Background features ${theme.bg}.`;
-    } else if (titleLower.includes('penutup') || titleLower.includes('selesai')) {
-      headerText = "Selamat! Misi Belajar Selesai 🎓";
-      slideSpecific = `Center displays a cheerful, elegant congratulations card celebrating completion of "${topic}". Tutor waving politely next to a neat diploma badge. Prominent clean rounded action button "SELESAI & ULANGI". Background features ${theme.bg}.`;
-    } else {
-      slideSpecific = `Right side features a large clean white rounded card container with generous whitespace displaying key concepts of "${pageTitle}". Left side has ${characterClause}. Background features ${theme.bg}.`;
-    }
-
-    const cleanPrompt = `Clean educational presentation slide UI, ${aspect} aspect ratio. Style: ${visualStyle}. ${characterClause}. ${slideSpecific}. ${detailClause}. Soft ambient studio lighting, sharp focus, 8k resolution, UI/UX educational presentation mockup.`;
-    const midjourneyPrompt = `${cleanPrompt} --ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw`;
-
-    const structuredSpec = `📐 Layout: ${layout === 'portrait' ? '9:16 Portrait (1080x1920 px)' : '16:9 Landscape (1920x1080 px)'}
-📚 Mata Pelajaran: ${subject} | Materi: "${topic}"
-✨ Tingkat Detail: ${detailLevel} (Clean, Minimal, Anti-Clutter)
-🎨 Gaya Visual: ${visualStyle}
-🌿 Latar Belakang: ${theme.bg}
-🧑‍🎓 Karakter: ${characterClause}
-📄 Kartu Konten: Kontainer kartu putih rounded bersih dengan drop shadow lembut dan whitespace lega (Content-First Design).
-🔘 Tombol: Tombol taktil rounded kontras di bagian bawah slide.
-🎨 Palet Warna: ${theme.palette}
-🔍 Kata Kunci Canva: ${theme.canvaKeywords}`;
-
-    const getFallbackSlideContent = (title: string) => {
-      const tLower = title.toLowerCase();
-      if (tLower.includes('cover') || tLower.includes('sampul')) {
-        return [`Mata Pelajaran: ${subject}`, `Topik: ${topic}`, `Target: ${ageGroup}`];
-      }
-      if (tLower.includes('navigasi') || tLower.includes('menu')) {
-        return ["📋 Petunjuk", "💡 Apersepsi", "🗺️ Peta / Mapping", "📖 Materi", "🎬 Video", "🎮 Kuis"];
-      }
-      if (tLower.includes('tujuan') || tLower.includes('indikator')) {
-        return [`Memahami konsep inti ${topic}`, `Mengidentifikasi komponen penting`, `Mampu menjawab kuis evaluasi`];
-      }
-      if (tLower.includes('apersepsi') || tLower.includes('pengantar')) {
-        return [`Mengamati fenomena sekitar kita`, `Bagaimana hal ini bisa terjadi?`, `Mari kita pelajari bersama!`];
-      }
-      if (tLower.includes('peta') || tLower.includes('perjalanan')) {
-        return ["Titik 1: Konsep Dasar", "Titik 2: Karakteristik", "Titik 3: Analisis", "Titik 4: Evaluasi & Kuis"];
-      }
-      if (tLower.includes('rangkuman') || tLower.includes('summary')) {
-        return [`Intisari utama materi ${topic}`, `Poin-poin penting yang harus diingat`, `Selamat belajar & berlatih!`];
-      }
-      if (tLower.includes('penutup') || tLower.includes('selesai')) {
-        return ["Misi pembelajaran selesai!", "Terima kasih atas partisipasimu", "Sampai jumpa di materi berikutnya!"];
-      }
-      return [`Mempelajari konsep ${title}`, "Memahami relevansi materi", "Eksplorasi visual interaktif"];
-    };
-
-    return {
-      pageTitle: `Halaman ${index + 1}: ${pageTitle}`,
-      headerText: sanitizeHeaderText(headerText),
-      cleanPrompt: sanitizeHeaderText(cleanPrompt),
-      midjourneyPrompt: sanitizeHeaderText(midjourneyPrompt),
-      illustrationDesc: structuredSpec,
-      canvaKeywords: theme.canvaKeywords,
-      slideContent: getFallbackSlideContent(pageTitle),
-      navigationButtons: index === 0 ? "MULAI BELAJAR!" : index === pages.length - 1 ? "SELESAI & ULANGI" : "LANJUT",
-      estimatedTime: "1-2 Menit",
-      educationalObjective: `Menyajikan konten esensial untuk sub-materi "${pageTitle}" dengan visual clean dan keterbacaan tinggi.`,
-      quizData: quizData
-    };
+    return buildSlideIdentity(pageTitle, index, pages.length, {
+      subject,
+      topic,
+      ageGroup,
+      pages,
+      layout,
+      visualStyle,
+      detailLevel,
+      mascot
+    });
   });
 }
 
@@ -497,8 +370,43 @@ ATURAN VISUAL STYLE & STRICT CLEAN LAYOUT:
    - Penempatan karakter: di sisi tepi/kiri, berpose ramah menyapa atau menunjuk materi, TIDAK MENUTUPI materi atau kartu konten.
    - Tombol: tombol aksi taktil rounded dengan kontras jelas di bagian bawah.
 
-STRICT HEADER RULE:
-NEVER generate any breadcrumbs, alur/flow indicators, progress chains, or navigation paths (such as '[Cover ➔ Navigasi ➔ Materi ➔ Kuis ➔ Selesai]', 'Cover ➔ Navigasi', or 'Cover -> Navigasi -> ...') in any headerText or slide content. The headerText for each slide must be a clean, simple, and direct title for that specific page (e.g. 'Tujuan Pembelajaran', 'Kuis 1: ...', 'Rangkuman Materi'). Breadcrumbs or flow chains are strictly forbidden on all slides as they clutter the header.
+STRICT SLIDE-TYPE ROUTING & VISUAL BLUEPRINT RULES:
+Setiap slide HARUS mempunyai layout dan tujuan visual yang unik sesuai jenis halamannya:
+1. COVER (Halaman 1):
+   - Format: Landscape 16:9 / Portrait 9:16.
+   - Sisi kiri: Robot tutor 3D yang ramah, membawa buku dan menunjuk panel informasi di kanan.
+   - Sisi kanan: Panel putih rounded besar dengan teks kontras tinggi. Label biru "MEDIA PEMBELAJARAN INTERAKTIF", Judul utama "${topic}" huruf besar tebal warna navy, bawah panel "${subject} - ${ageGroup}".
+   - DILARANG menampilkan menu, kuis, atau breadcrumb.
+
+2. MENU NAVIGASI:
+   - Tepat 6 menu dalam grid 2x3: 1. Petunjuk, 2. Apersepsi, 3. Peta Konsep, 4. Materi, 5. Video, 6. Kuis.
+   - DILARANG menu ke-7.
+
+3. PETUNJUK:
+   - Panduan cara belajar bertahap dengan ikon kecil dan poin bernomor. Bukan soal pilihan ganda!
+
+4. APERSEPSI:
+   - Visual pengantar fenomena riil seputar "${topic}" dengan pemantik rasa ingin tahu ("Tahukah Kamu?").
+
+5. PETA KONSEP (WAJIB DIAGRAM HIERARKI / MIND MAP):
+   - Diagram konsep hierarkis atau mind map dengan node utama "${topic}" di tengah/atas yang terhubung ke 4 cabang sub-konsep dengan garis konektor bersih.
+   - DILARANG keras membuat peta jalur pos/game/checkpoint 1-2-3-4! Ini adalah diagram peta konsep pemikiran akademik.
+
+6. MATERI INTI:
+   - Kartu modular penjelasan esensial terstruktur dengan diagram ilmiah/materi sesuai "${topic}".
+
+7. VIDEO PEMBELAJARAN:
+   - Frame media player interaktif 16:9 dengan tombol Play besar, bar durasi, dan judul tayangan animasi materi.
+
+8. KUIS PILIHAN GANDA:
+   - Satu pertanyaan jelas di atas dan 4 kartu pilihan jawaban horizontal (A, B, C, D) dengan badge huruf bulat.
+
+9. RESPON FEEDBACK (Benar/Salah):
+   - Benar: 3 bintang emas & lencana hijau "JAWABAN BENAR!".
+   - Salah: Maskot memegang bohlam ide dengan ajakan ramah "Ayo Coba Lagi!".
+
+10. RANGKUMAN & PENUTUP:
+    - 3 kartu ringkasan intisari materi dan tombol "SELESAI & ULANGI".
 
 OUTPUT FORMAT UNTUK SETIAP SLIDE:
 1. cleanPrompt: Prompt bahasa Inggris murni yang mengalir alami, siap paste langsung ke Midjourney v6, Canva Magic Media, Imagen 3, atau DALL-E 3.
@@ -514,7 +422,7 @@ OUTPUT FORMAT UNTUK SETIAP SLIDE:
 Daftar halaman:
 ${pageListStr}
 
-Pastikan teks cleanPrompt sangat rapi, mengutamakan whitespace, kartu modular bersih, dan bebas dari dekorasi berlebih (no clutter, no confetti).
+Pastikan teks cleanPrompt sangat rapi, mengikuti routing jenis slide (terutama Peta Konsep sebagai diagram hierarki, bukan jalur kuis!), mengutamakan whitespace, kartu modular bersih, dan bebas dari dekorasi berlebih (no clutter, no confetti).
 Harap kembalikan dalam struktur JSON Array valid.`;
 
     const { response, usedModel } = await callGeminiWithFallback(ai, {
@@ -609,27 +517,28 @@ app.post('/api/analyze-material', async (req: express.Request, res: express.Resp
   }
 
   try {
-    const systemInstruction = `Anda adalah seorang Ahli Kurikulum Pendidikan dan Pengembang Media Pembelajaran Interaktif EduSmart Lab.
+    const systemInstruction = `Anda adalah seorang Ahli Kurikulum Pendidikan dan Pengembang Media Pembelajaran Interaktif EduSmart Creator Lab.
 Tugas Anda adalah menganalisis dokumen/naskah materi pembelajaran yang diunggah oleh guru (nama file: "${fileName || 'materi.pdf'}").
 
 ATURAN UTAMA:
 1. JUDUL/TOPIK: Ekstrak JUDUL PERSIS yang tertulis pada dokumen naskah (judul utama, bab, atau topik pembelajaran di baris-baris pertama dokumen). Jangan mengarang judul yang melenceng dari apa yang tertulis di dalam file!
 2. TARGET USIA: Tentukan target usia yang paling cocok: 'PAUD (3-5 tahun)', 'SD Kelas Rendah (6-8 tahun)', 'SD Kelas Tinggi (9-11 tahun)', 'SMP (12-14 tahun)', atau 'SMA/Umum (15+ tahun)'.
-3. STRUKTUR 13 HALAMAN STANDAR INTERAKTIF:
-   Susun alur tepat 13 slide standar EduSmart Lab dengan menyesuaikan sub-topik dan 4 pertanyaan kuis dengan isi naskah dokumen:
-   1. Cover: [Judul Topik Dokumen]
-   2. Navigasi (Tujuan Pembelajaran, Kuis)
-   3. Tujuan Pembelajaran
+3. STRUKTUR STANDAR 14 HALAMAN INTERAKTIF (WAJIB):
+   Susun alur slide standar EduSmart Creator Lab dengan menyesuaikan sub-topik dan 4 pertanyaan kuis dengan isi naskah dokumen:
+   1. Cover
+   2. Navigasi (Petunjuk, Apersepsi, Peta Konsep, Materi, Video, Kuis)
+   3. Petunjuk
    4. Apersepsi
-   5. Peta Perjalanan Kuis (4 titik kuis)
-   6. Kuis 1: [Pertanyaan pilihan ganda 1 berdasarkan isi dokumen]
-   7. Kuis 2: [Pertanyaan pilihan ganda 2 berdasarkan isi dokumen]
-   8. Kuis 3: [Pertanyaan pilihan ganda 3 berdasarkan isi dokumen]
-   9. Kuis 4: [Pertanyaan pilihan ganda 4 berdasarkan isi dokumen]
-   10. Respon Benar
-   11. Respon Salah
-   12. Rangkuman/Summary
-   13. Penutup
+   5. Peta Konsep
+   6. Materi Inti
+   7. Video Pembelajaran
+   8. Kuis 1: [Pertanyaan pilihan ganda 1 berdasarkan isi dokumen]
+   9. Kuis 2: [Pertanyaan pilihan ganda 2 berdasarkan isi dokumen]
+   10. Kuis 3: [Pertanyaan pilihan ganda 3 berdasarkan isi dokumen]
+   11. Kuis 4: [Pertanyaan pilihan ganda 4 berdasarkan isi dokumen]
+   12. Respon Benar
+   13. Respon Salah
+   14. Rangkuman & Penutup
 4. RANGKUMAN: Buat ringkasan ramah guru 2-3 kalimat yang membuktikan bahwa materi dokumen benar-benar dibaca dan dipahami secara akurat.
 
 Hasilkan JSON dengan format:
@@ -637,19 +546,20 @@ Hasilkan JSON dengan format:
   "extractedTopic": "Judul persis dari isi dokumen (maksimal 6-8 kata)",
   "recommendedAgeGroup": "Kategori usia",
   "suggestedPages": [
-    "Cover",
-    "Navigasi (Tujuan Pembelajaran, Kuis)",
-    "Tujuan Pembelajaran",
-    "Apersepsi",
-    "Peta Perjalanan Kuis (4 titik kuis)",
-    "Kuis 1: ...",
-    "Kuis 2: ...",
-    "Kuis 3: ...",
-    "Kuis 4: ...",
-    "Respon Benar",
-    "Respon Salah",
-    "Rangkuman/Summary",
-    "Penutup"
+    "1. Cover",
+    "2. Navigasi (Petunjuk, Apersepsi, Peta Konsep, Materi, Video, Kuis)",
+    "3. Petunjuk",
+    "4. Apersepsi",
+    "5. Peta Konsep",
+    "6. Materi Inti",
+    "7. Video Pembelajaran",
+    "8. Kuis 1: ...",
+    "9. Kuis 2: ...",
+    "10. Kuis 3: ...",
+    "11. Kuis 4: ...",
+    "12. Respon Benar",
+    "13. Respon Salah",
+    "14. Rangkuman & Penutup"
   ],
   "summary": "Ringkasan akurat isi naskah dokumen."
 }`;

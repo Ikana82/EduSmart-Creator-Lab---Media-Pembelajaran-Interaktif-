@@ -45,6 +45,8 @@ import {
   Palette,
   Wand2
 } from 'lucide-react';
+import { buildSlideIdentity, buildTopicConceptMapData, buildTopicQuizData } from './utils/slidePromptEngine';
+import { detectSlideType } from './types/slideTypes';
 
 export const STANDARD_13_PAGES = [
   "1. Cover",
@@ -389,6 +391,13 @@ interface GeneratedPrompt {
     correctAnswer: string;
     explanation: string;
   };
+  conceptMapData?: {
+    centralConcept: string;
+    subConcepts: Array<{ title: string; desc: string }>;
+    connectingRelationships: string[];
+  };
+  guidePoints?: Array<{ icon: string; title: string; desc: string }>;
+  videoPlaceholderTopic?: string;
 }
 
 declare global {
@@ -1187,8 +1196,8 @@ export default function App() {
 
     // 4. Slide specific layout
     let slideSpecific = "";
-    if (titleLower.includes('cover') || titleLower.includes('sampul')) {
-      slideSpecific = `Center displays a prominent, clean title banner reading "${topic}" with clean educational typography, subject badge "${subject}", and subtitle "${ageGroup}". Background features ${theme.bg}. Bottom center has a clean, tactile rounded action button "MULAI BELAJAR"`;
+    if (titleLower.includes('cover') || titleLower.includes('sampul') || index === 0) {
+      slideSpecific = `Left side features a friendly, smiling 3D robot tutor holding a book and pointing politely towards the large white information panel on the right. Right side features a very large, clean white information panel with high text contrast. Top of the panel has a blue title label "MEDIA PEMBELAJARAN INTERAKTIF". Center of the panel displays the main lesson title: "${topic}" in giant, bold, clear navy blue typography. Bottom of the panel displays "${subject} - ${ageGroup}". Background of the slide is a clean, modern soft light blue with soft ambient studio lighting, a completely pristine and professional layout with ample whitespace.`;
     } else if (titleLower.includes('navigasi') || titleLower.includes('menu')) {
       slideSpecific = `Main menu navigation board. Displays exactly six neat, modular white rounded card buttons organized in a balanced grid layout (2 rows of 3 columns) with clean matching icons: "1. Petunjuk" (icon: info/guide), "2. Apersepsi" (icon: lightbulb/idea), "3. Peta Konsep" (icon: map/mapping), "4. Materi" (icon: open book/content), "5. Video" (icon: movie screen/play), and "6. Kuis" (icon: game controller). Outstanding spacious layout, high contrast readability, clean typography. Highlighting 'Menu Navigasi' as the current active step in this lesson journey. Background features ${theme.bg}`;
     } else if (titleLower.includes('tujuan') || titleLower.includes('indikator')) {
@@ -1220,121 +1229,24 @@ export default function App() {
     return `Clean educational presentation slide UI, ${aspect} aspect ratio. ${styleClause}. ${characterClause}. ${slideSpecific}. ${detailClause}. Soft ambient studio lighting, sharp focus, 8k resolution, UI/UX educational presentation mockup.`;
   };
 
-  // Local fallback generator (strictly obeying Master Prompt rules)
+  // Local generator strictly using buildSlideIdentity
   const generateLocalPromptsFallback = () => {
-    const layoutSize = layout === 'portrait' ? '9:16 (Portrait)' : '16:9 (Landscape)';
-    const theme = getAdaptiveSubjectTheme(subject, topic);
-
     return pages.map((pageTitle, index) => {
-      let headerText = pageTitle;
-      let quizData: any = undefined;
-      const titleLower = pageTitle.toLowerCase();
-
-      // Subject-adaptive quiz & header texts
-      if (titleLower.includes('cover') || titleLower.includes('sampul')) {
-        headerText = topic || "Media Pembelajaran Interaktif";
-      } else if (titleLower.includes('navigasi') || titleLower.includes('menu')) {
-        headerText = "Pilih Menu Belajar";
-      } else if (titleLower.includes('tujuan') || titleLower.includes('indikator')) {
-        headerText = "Tujuan Pembelajaran Kita";
-      } else if (titleLower.includes('apersepsi') || titleLower.includes('pengantar') || titleLower.includes('motivasi')) {
-        headerText = "Mari Berpikir & Mengamati!";
-      } else if (titleLower.includes('peta') || titleLower.includes('perjalanan') || titleLower.includes('titik kuis')) {
-        headerText = "Peta Petualangan 4 Titik Kuis";
-      } else if (titleLower.includes('kuis 1') || index === 5) {
-        const q = getSubjectAwareQuiz(1);
-        headerText = q.header;
-        quizData = q;
-      } else if (titleLower.includes('kuis 2') || index === 6) {
-        const q = getSubjectAwareQuiz(2);
-        headerText = q.header;
-        quizData = q;
-      } else if (titleLower.includes('kuis 3') || index === 7) {
-        const q = getSubjectAwareQuiz(3);
-        headerText = q.header;
-        quizData = q;
-      } else if (titleLower.includes('kuis 4') || index === 8) {
-        const q = getSubjectAwareQuiz(4);
-        headerText = q.header;
-        quizData = q;
-      } else if (titleLower.includes('respon benar') || titleLower.includes('benar')) {
-        headerText = "Luar Biasa! Jawabanmu Benar Sekali ⭐⭐⭐";
-      } else if (titleLower.includes('respon salah') || titleLower.includes('salah')) {
-        headerText = "Hampir Tepat! Yuk Coba Sekali Lagi 💡";
-      } else if (titleLower.includes('rangkuman') || titleLower.includes('summary')) {
-        headerText = "Rangkuman / Intisari Materi";
-      } else if (titleLower.includes('penutup') || titleLower.includes('selesai')) {
-        headerText = "Selamat! Misi Belajar Selesai 🎓";
-      } else {
-        headerText = pageTitle;
-      }
-
-      // Generate ultra-clean prompt and Midjourney command
-      const cleanPrompt = generateCleanPromptForPage(pageTitle, index);
-      const midjourneyPrompt = `${cleanPrompt} --ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw`;
-
-      // Structured Indonesian guide
-      const mascotClause = mascotType === 'none' 
-        ? 'Tanpa maskot (fokus murni diagram dan materi esensial).' 
-        : mascotType === 'custom' && mascotImageName 
-          ? `Karakter tutor kustom berdasarkan foto referensi "${mascotImageName}".`
-          : mascotType === 'custom' && customMascot 
-            ? `Karakter tutor "${customMascot}".`
-            : 'Maskot tutor ramah yang menyapa siswa di sisi kiri slide tanpa menutupi konten.';
-
-      const structuredSpec = `📐 Layout: ${layoutSize} (1920x1080 px Landscape / 1080x1920 px Portrait)
-📚 Mata Pelajaran: ${subject} | Topik: "${topic}"
-✨ Tingkat Detail: ${detailLevel === 'clean-minimalis' ? 'Clean Minimalis (Master Prompt Standard)' : detailLevel}
-🎨 Gaya Visual: ${visualStyle}
-🌿 Latar Belakang: ${theme.bg}
-🧑‍🎓 Karakter Pendamping: ${mascotClause}
-📄 Kartu Konten Utama: Kontainer kartu putih rounded bersih dengan drop shadow lembut dan ruang kosong (whitespace) lega untuk materi & opsi kuis (Content-First Design).
-🔘 Tombol Interaktif: Tombol rounded taktil bersih berkontras jelas di bagian bawah.
-🎨 Palet Warna: ${theme.palette}
-🔍 Kata Kunci Canva: ${theme.canvaKeywords}`;
-
-      const getFallbackSlideContent = (title: string) => {
-        const tLower = title.toLowerCase();
-        if (tLower.includes('cover') || tLower.includes('sampul')) {
-          return [`Mata Pelajaran: ${subject}`, `Topik: ${topic}`, `Target: ${ageGroup}`];
+      return buildSlideIdentity(pageTitle, index, pages.length, {
+        subject: subject || "IPAS / Sains",
+        topic: topic.trim() || "Ekosistem & Rantai Makanan",
+        ageGroup,
+        learningObjective: learningObjective || "",
+        pages,
+        layout,
+        visualStyle,
+        detailLevel,
+        mascot: {
+          type: mascotType,
+          description: customMascot,
+          imageName: mascotImageName
         }
-        if (tLower.includes('navigasi') || tLower.includes('menu')) {
-          return ["📋 Petunjuk", "💡 Apersepsi", "🗺️ Peta / Mapping", "📖 Materi", "🎬 Video", "🎮 Kuis"];
-        }
-        if (tLower.includes('tujuan') || tLower.includes('indikator')) {
-          return [`Memahami konsep inti ${topic}`, `Mengidentifikasi komponen penting`, `Mampu menjawab kuis evaluasi`];
-        }
-        if (tLower.includes('apersepsi') || tLower.includes('pengantar')) {
-          return [`Mengamati fenomena sekitar kita`, `Bagaimana hal ini bisa terjadi?`, `Mari kita pelajari bersama!`];
-        }
-        if (tLower.includes('peta') || tLower.includes('perjalanan')) {
-          return ["Titik 1: Konsep Dasar", "Titik 2: Karakteristik", "Titik 3: Analisis", "Titik 4: Evaluasi & Kuis"];
-        }
-        if (tLower.includes('rangkuman') || tLower.includes('summary')) {
-          return [`Intisari utama materi ${topic}`, `Poin-poin penting yang harus diingat`, `Selamat belajar & berlatih!`];
-        }
-        if (tLower.includes('penutup') || tLower.includes('selesai')) {
-          return ["Misi pembelajaran selesai!", "Terima kasih atas partisipasimu", "Sampai jumpa di materi berikutnya!"];
-        }
-        return [`Mempelajari konsep ${title}`, "Memahami relevansi materi", "Eksplorasi visual interaktif"];
-      };
-
-      const cleanHeader = sanitizeHeaderText(headerText);
-      const fallbackTitle = pageTitle || "Materi Pembelajaran";
-
-      return {
-        pageTitle: `Halaman ${index + 1}: ${pageTitle}`,
-        headerText: cleanHeader || fallbackTitle.replace(/^\d+[\s.]*-?\s*/, ""),
-        cleanPrompt: sanitizeHeaderText(cleanPrompt),
-        midjourneyPrompt: sanitizeHeaderText(midjourneyPrompt),
-        illustrationDesc: structuredSpec,
-        canvaKeywords: theme.canvaKeywords,
-        slideContent: getFallbackSlideContent(pageTitle),
-        navigationButtons: index === 0 ? "MULAI BELAJAR!" : index === pages.length - 1 ? "SELESAI & ULANGI" : "LANJUT",
-        estimatedTime: "1-2 Menit",
-        educationalObjective: `Memberikan stimulus visual yang terstruktur dan bersih untuk sub-materi "${pageTitle}" sehingga mempercepat pemahaman kognitif siswa.`,
-        quizData: quizData
-      };
+      });
     });
   };
 
@@ -1392,50 +1304,39 @@ export default function App() {
       }
 
       if (data.prompts && Array.isArray(data.prompts)) {
-        const selectedStyleObj = VISUAL_STYLES.find(s => s.id === visualStyle) || VISUAL_STYLES[0];
         const enrichedPrompts = data.prompts.map((p: any, idx: number) => {
-          const fallbackClean = generateCleanPromptForPage(pages[idx] || p.pageTitle, idx);
-          const clean = sanitizeHeaderText(p.cleanPrompt || fallbackClean);
-          
-          // Fallback slideContent if missing
-          const getFallbackContent = (title: string) => {
-            const tLower = title.toLowerCase();
-            if (tLower.includes('cover') || tLower.includes('sampul')) {
-              return [`Mata Pelajaran: ${subject}`, `Topik: ${topic}`, `Target: ${ageGroup}`];
+          const blueprint = buildSlideIdentity(pages[idx] || p.pageTitle, idx, pages.length, {
+            subject: subject || "IPAS / Sains",
+            topic: topic.trim() || "Ekosistem & Rantai Makanan",
+            ageGroup,
+            learningObjective: learningObjective || "",
+            pages,
+            layout,
+            visualStyle,
+            detailLevel,
+            mascot: {
+              type: mascotType,
+              description: customMascot,
+              imageName: mascotImageName
             }
-            if (tLower.includes('navigasi') || tLower.includes('menu')) {
-              return ["📋 Petunjuk", "💡 Apersepsi", "🗺️ Peta / Mapping", "📖 Materi", "🎬 Video", "🎮 Kuis"];
-            }
-            if (tLower.includes('tujuan') || tLower.includes('indikator')) {
-              return [`Memahami konsep inti ${topic}`, `Mengidentifikasi komponen penting`, `Mampu menjawab kuis evaluasi`];
-            }
-            if (tLower.includes('apersepsi') || tLower.includes('pengantar')) {
-              return [`Mengamati fenomena sekitar kita`, `Bagaimana hal ini bisa terjadi?`, `Mari kita pelajari bersama!`];
-            }
-            if (tLower.includes('peta') || tLower.includes('perjalanan')) {
-              return ["Titik 1: Konsep Dasar", "Titik 2: Karakteristik", "Titik 3: Analisis", "Titik 4: Evaluasi & Kuis"];
-            }
-            if (tLower.includes('rangkuman') || tLower.includes('summary')) {
-              return [`Intisari utama materi ${topic}`, `Poin-poin penting yang harus diingat`, `Selamat belajar & berlatih!`];
-            }
-            if (tLower.includes('penutup') || tLower.includes('selesai')) {
-              return ["Misi pembelajaran selesai!", "Terima kasih atas partisipasimu", "Sampai jumpa di materi berikutnya!"];
-            }
-            return [`Mempelajari konsep ${title}`, "Memahami relevansi materi", "Eksplorasi visual interaktif"];
-          };
+          });
 
+          const clean = sanitizeHeaderText(p.cleanPrompt || blueprint.cleanPrompt);
           const cleanHeader = sanitizeHeaderText(p.headerText);
-          const fallbackTitle = pages[idx] || p.pageTitle || "Materi Pembelajaran";
-          const header = cleanHeader || fallbackTitle.replace(/^\d+[\s.]*-?\s*/, "");
 
           return {
+            ...blueprint,
             ...p,
-            headerText: header,
+            headerText: cleanHeader || blueprint.headerText,
             cleanPrompt: clean,
             midjourneyPrompt: sanitizeHeaderText(p.midjourneyPrompt || `${clean} --ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw`),
-            illustrationDesc: sanitizeHeaderText(p.illustrationDesc || ''),
-            canvaKeywords: p.canvaKeywords || selectedStyleObj.canvaKeywords,
-            slideContent: p.slideContent || getFallbackContent(pages[idx] || p.pageTitle)
+            illustrationDesc: sanitizeHeaderText(p.illustrationDesc || blueprint.illustrationDesc),
+            canvaKeywords: p.canvaKeywords || blueprint.canvaKeywords,
+            slideContent: p.slideContent && Array.isArray(p.slideContent) && p.slideContent.length > 0 ? p.slideContent : blueprint.slideContent,
+            quizData: p.quizData || blueprint.quizData,
+            conceptMapData: blueprint.conceptMapData,
+            guidePoints: blueprint.guidePoints,
+            videoPlaceholderTopic: blueprint.videoPlaceholderTopic
           };
         });
         setResults(enrichedPrompts);
@@ -3025,62 +2926,145 @@ export default function App() {
                             
                             {/* Left: Mascot Character Preview */}
                             <div className="col-span-4 flex flex-col items-center justify-center text-center">
-                              {mascotType === 'custom' && mascotImage ? (
-                                <div className="relative">
-                                  <img 
-                                    src={mascotImage} 
-                                    alt="Foto Karakter" 
-                                    className="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-md ring-2 ring-forest-600/30" 
-                                  />
-                                  <span className="absolute -bottom-1 -right-1 bg-forest-900 text-white text-[8px] font-bold px-1 rounded-full">
-                                    Tutor
-                                  </span>
-                                </div>
-                              ) : mascotType === 'none' ? (
-                                <div className="w-12 h-12 rounded-2xl bg-white/70 border border-white flex items-center justify-center text-forest-800 text-lg shadow-2xs">
-                                  📊
-                                </div>
-                              ) : (
-                                <div className="w-14 h-14 rounded-2xl bg-white/80 border-2 border-white flex flex-col items-center justify-center shadow-md">
-                                  <span className="text-2xl">🎒</span>
-                                  <span className="text-[8px] font-bold text-forest-800">Tutor Cilik</span>
-                                </div>
-                              )}
-                              <span className="text-[9px] font-bold text-forest-950 mt-1 max-w-[85px] truncate">
-                                {mascotType === 'custom' ? (mascotImageName || customMascot || "Karakter Guru") : mascotType === 'none' ? "Konten Sains" : "Maskot Ramah"}
-                              </span>
+                              {(() => {
+                                const isCover = index === 0 || titleLower.includes('cover') || titleLower.includes('sampul');
+                                if (isCover) {
+                                  return (
+                                    <>
+                                      {mascotType === 'custom' && mascotImage ? (
+                                        <div className="relative">
+                                          <img 
+                                            src={mascotImage} 
+                                            alt="Foto Karakter" 
+                                            className="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-md ring-2 ring-forest-600/30" 
+                                          />
+                                          <span className="absolute -bottom-1 -right-1 bg-blue-600 text-white text-[8px] font-bold px-1 rounded-full">
+                                            Robot 🤖
+                                          </span>
+                                        </div>
+                                      ) : (
+                                        <div className="w-14 h-14 rounded-2xl bg-white/85 border-2 border-white flex flex-col items-center justify-center shadow-md animate-pulse">
+                                          <span className="text-2xl">🤖</span>
+                                          <span className="text-[7px] font-extrabold text-blue-900 tracking-tighter uppercase">3D Tutor</span>
+                                        </div>
+                                      )}
+                                      <span className="text-[8px] font-bold text-sky-950 mt-1 max-w-[85px] leading-tight text-center">
+                                        Membawa Buku & Menunjuk Panel
+                                      </span>
+                                    </>
+                                  );
+                                }
+                                
+                                return (
+                                  <>
+                                    {mascotType === 'custom' && mascotImage ? (
+                                      <div className="relative">
+                                        <img 
+                                          src={mascotImage} 
+                                          alt="Foto Karakter" 
+                                          className="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-md ring-2 ring-forest-600/30" 
+                                        />
+                                        <span className="absolute -bottom-1 -right-1 bg-forest-900 text-white text-[8px] font-bold px-1 rounded-full">
+                                          Tutor
+                                        </span>
+                                      </div>
+                                    ) : mascotType === 'none' ? (
+                                      <div className="w-12 h-12 rounded-2xl bg-white/70 border border-white flex items-center justify-center text-forest-800 text-lg shadow-2xs">
+                                        📊
+                                      </div>
+                                    ) : (
+                                      <div className="w-14 h-14 rounded-2xl bg-white/80 border-2 border-white flex flex-col items-center justify-center shadow-md">
+                                        <span className="text-2xl">🎒</span>
+                                        <span className="text-[8px] font-bold text-forest-800">Tutor Cilik</span>
+                                      </div>
+                                    )}
+                                    <span className="text-[9px] font-bold text-forest-950 mt-1 max-w-[85px] truncate">
+                                      {mascotType === 'custom' ? (mascotImageName || customMascot || "Karakter Guru") : mascotType === 'none' ? "Konten Sains" : "Maskot Ramah"}
+                                    </span>
+                                  </>
+                                );
+                              })()}
                             </div>
 
-                            {/* Right: Clean White Rounded Content Card with Generous Whitespace */}
                             <div className="col-span-8 bg-white/95 backdrop-blur-xs rounded-xl shadow-xs border border-white p-2.5 flex flex-col justify-between min-h-[90px]">
                               
                               {(() => {
                                 const tLower = prompt.pageTitle.toLowerCase();
+                                const isCover = index === 0 || tLower.includes('cover') || tLower.includes('sampul');
+                                
+                                if (isCover) {
+                                  return (
+                                    <div className="flex flex-col justify-between h-full flex-1">
+                                      {/* Top label */}
+                                      <div className="flex items-center">
+                                        <span className="text-[5.5px] font-black text-blue-600 bg-blue-50/90 px-1.5 py-0.5 rounded-xs uppercase tracking-wider w-fit border border-blue-200/40">
+                                          MEDIA PEMBELAJARAN INTERAKTIF
+                                        </span>
+                                      </div>
+                                      
+                                      {/* Main title */}
+                                      <div className="my-1 text-left">
+                                        <h1 className="text-[10px] sm:text-[11px] font-extrabold text-[#0c2340] leading-snug font-display break-words tracking-tight uppercase line-clamp-3">
+                                          {topic || "JUDUL MATERI"}
+                                        </h1>
+                                      </div>
+                                      
+                                      {/* Bottom metadata */}
+                                      <div className="border-t border-neutral-100/80 pt-1 mt-auto flex flex-col gap-0.5 text-left text-[6px] font-bold text-neutral-500 font-sans">
+                                        <span className="text-sky-800">📚 {subject || "Mata Pelajaran"}</span>
+                                        <span>🎒 {ageGroup || "Semua Kelas"}</span>
+                                      </div>
+                                    </div>
+                                  );
+                                }
+
                                 let currentSecIdx = -1;
-                                if (tLower.includes('petunjuk') || tLower.includes('panduan')) currentSecIdx = 0;
-                                else if (tLower.includes('apersepsi') || tLower.includes('pengantar')) currentSecIdx = 1;
-                                else if (tLower.includes('peta') || tLower.includes('mapping') || tLower.includes('konsep')) currentSecIdx = 2;
-                                else if (tLower.includes('materi') || tLower.includes('inti')) currentSecIdx = 3;
-                                else if (tLower.includes('video') || tLower.includes('pembelajaran')) currentSecIdx = 4;
-                                else if (tLower.includes('kuis') || tLower.includes('soal') || tLower.includes('respon') || tLower.includes('benar') || tLower.includes('salah')) currentSecIdx = 5;
+                                if (tLower.includes('navigasi') || tLower.includes('menu')) {
+                                  currentSecIdx = -1;
+                                } else if (tLower.includes('petunjuk') || tLower.includes('panduan')) {
+                                  currentSecIdx = 0;
+                                } else if (tLower.includes('apersepsi') || tLower.includes('pengantar') || tLower.includes('motivasi')) {
+                                  currentSecIdx = 1;
+                                } else if (tLower.includes('peta') || tLower.includes('mapping') || tLower.includes('konsep')) {
+                                  currentSecIdx = 2;
+                                } else if (tLower.includes('materi') || tLower.includes('inti') || tLower.includes('bacaan') || tLower.includes('penjelasan')) {
+                                  currentSecIdx = 3;
+                                } else if (tLower.includes('video') || tLower.includes('pembelajaran') || tLower.includes('tonton')) {
+                                  currentSecIdx = 4;
+                                } else if (tLower.includes('kuis') || tLower.includes('soal') || tLower.includes('respon') || tLower.includes('benar') || tLower.includes('salah') || tLower.includes('tanya')) {
+                                  currentSecIdx = 5;
+                                } else {
+                                  // Fallback index-based mapping assuming standard flow
+                                  if (results.length >= 10) {
+                                    if (index === 2) currentSecIdx = 0;
+                                    else if (index === 3) currentSecIdx = 1;
+                                    else if (index === 4) currentSecIdx = 2;
+                                    else if (index === 5) currentSecIdx = 3;
+                                    else if (index === 6) currentSecIdx = 4;
+                                    else if (index >= 7 && index <= 12) currentSecIdx = 5;
+                                  } else {
+                                    // Proportion fallback
+                                    currentSecIdx = 3; // Default to Materi for any general middle slides
+                                  }
+                                }
 
                                 const navItems = [
                                   { name: "Petunjuk", icon: "📋" },
                                   { name: "Apersepsi", icon: "💡" },
-                                  { name: "Peta", icon: "🗺️" },
+                                  { name: "Peta Konsep", icon: "🗺️" },
                                   { name: "Materi", icon: "📖" },
                                   { name: "Video", icon: "🎬" },
                                   { name: "Kuis", icon: "🎮" }
                                 ];
 
                                 return (
-                                  <div className="border-b border-neutral-100 pb-1 flex flex-col gap-1">
+                                  <div className="border-b border-neutral-100 pb-1.5 flex flex-col gap-1.5">
                                     {currentSecIdx >= 0 && (
-                                      <div className="flex items-center gap-0.5 flex-wrap mb-0.5">
+                                      <div className="flex items-center gap-1 flex-wrap mb-1">
                                         {navItems.map((item, sIdx) => (
                                           <span 
                                             key={sIdx} 
-                                            className={`text-[5px] px-1 py-0.2 rounded-xs font-bold transition-all flex items-center gap-0.5 ${
+                                            className={`text-[6.5px] sm:text-[7.5px] px-1.5 py-0.5 rounded-sm font-bold transition-all flex items-center gap-0.5 ${
                                               sIdx === currentSecIdx 
                                                 ? 'bg-forest-900 text-white shadow-2xs scale-105' 
                                                 : 'bg-[#FAF6EE] text-neutral-400 border border-neutral-200/40'
@@ -3092,7 +3076,7 @@ export default function App() {
                                         ))}
                                       </div>
                                     )}
-                                    <p className="text-[10px] font-bold text-forest-950 leading-tight truncate">
+                                    <p className="text-[10px] sm:text-[11px] font-bold text-forest-950 leading-tight truncate">
                                       {prompt.headerText}
                                     </p>
                                   </div>
@@ -3100,37 +3084,79 @@ export default function App() {
                               })()}
 
                               {/* Card Body depending on slide type */}
-                              <div className="my-1.5">
-                                {prompt.pageTitle.toLowerCase().includes('navigasi') ? (
-                                  <div className="grid grid-cols-2 gap-1 w-full text-[6px] font-sans">
-                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-md font-semibold flex items-center gap-0.5 border border-neutral-200">
-                                      <span>📋</span> Petunjuk
-                                    </div>
-                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-md font-semibold flex items-center gap-0.5 border border-neutral-200">
-                                      <span>💡</span> Apersepsi
-                                    </div>
-                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-md font-semibold flex items-center gap-0.5 border border-neutral-200">
-                                      <span>🗺️</span> Peta / Mapping
-                                    </div>
-                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-md font-semibold flex items-center gap-0.5 border border-neutral-200">
-                                      <span>📖</span> Materi
-                                    </div>
-                                    <div className="py-0.5 px-1 bg-neutral-50 text-neutral-800 rounded-md font-semibold flex items-center gap-0.5 border border-neutral-200">
-                                      <span>🎬</span> Video
-                                    </div>
-                                    <div className="py-0.5 px-1 bg-coral-600 text-white rounded-md font-bold flex items-center gap-0.5 shadow-2xs">
-                                      <span>🎮</span> Kuis
-                                    </div>
-                                  </div>
-                                ) : prompt.pageTitle.toLowerCase().includes('peta') ? (
-                                  <div className="flex items-center justify-center gap-1 py-1">
-                                    {[1, 2, 3, 4].map(n => (
-                                      <span key={n} className="w-5 h-5 rounded-full bg-forest-900 text-white text-[8px] font-bold flex items-center justify-center shadow-2xs">
-                                        {n}
-                                      </span>
-                                    ))}
-                                  </div>
-                                ) : prompt.pageTitle.toLowerCase().includes('respon benar') ? (
+                              {!(index === 0 || prompt.pageTitle.toLowerCase().includes('cover') || prompt.pageTitle.toLowerCase().includes('sampul')) ? (
+                                <>
+                                  <div className="my-1.5">
+                                    {prompt.pageTitle.toLowerCase().includes('navigasi') ? (
+                                      <div className="grid grid-cols-2 gap-1.5 w-full text-[7.5px] sm:text-[8.5px] font-sans">
+                                        <div className="py-1 px-1.5 bg-blue-50/90 text-blue-900 rounded-lg font-bold flex items-center gap-1 border border-blue-200/50">
+                                          <span className="text-[10px]">📋</span> Petunjuk
+                                        </div>
+                                        <div className="py-1 px-1.5 bg-amber-50/90 text-amber-900 rounded-lg font-bold flex items-center gap-1 border border-amber-200/50">
+                                          <span className="text-[10px]">💡</span> Apersepsi
+                                        </div>
+                                        <div className="py-1 px-1.5 bg-teal-50/90 text-teal-900 rounded-lg font-bold flex items-center gap-1 border border-teal-200/50">
+                                          <span className="text-[10px]">🗺️</span> Peta / Mapping
+                                        </div>
+                                        <div className="py-1 px-1.5 bg-emerald-50/90 text-emerald-900 rounded-lg font-bold flex items-center gap-1 border border-emerald-200/50">
+                                          <span className="text-[10px]">📖</span> Materi
+                                        </div>
+                                        <div className="py-1 px-1.5 bg-indigo-50/90 text-indigo-900 rounded-lg font-bold flex items-center gap-1 border border-indigo-200/50">
+                                          <span className="text-[10px]">🎬</span> Video
+                                        </div>
+                                        <div className="py-1 px-1.5 bg-rose-50/90 text-rose-900 rounded-lg font-bold flex items-center gap-1 border border-rose-200/50">
+                                          <span className="text-[10px]">🎮</span> Kuis
+                                        </div>
+                                      </div>
+                                    ) : prompt.pageTitle.toLowerCase().includes('petunjuk') || prompt.pageTitle.toLowerCase().includes('panduan') ? (
+                                      <div className="flex flex-col gap-1 w-full text-[6.5px] sm:text-[7px]">
+                                        <div className="flex items-center gap-1 bg-sky-50/80 px-1.5 py-0.5 rounded border border-sky-100">
+                                          <span className="text-[8px]">👆</span>
+                                          <span className="font-semibold text-sky-950">Gunakan tombol panah untuk berpindah halaman materi</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 bg-amber-50/80 px-1.5 py-0.5 rounded border border-amber-100">
+                                          <span className="text-[8px]">🎧</span>
+                                          <span className="font-semibold text-amber-950">Putar audio & video penjelasan interaktif</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 bg-emerald-50/80 px-1.5 py-0.5 rounded border border-emerald-100">
+                                          <span className="text-[8px]">📝</span>
+                                          <span className="font-semibold text-emerald-950">Jawab kuis evaluasi pemahaman belajar</span>
+                                        </div>
+                                      </div>
+                                    ) : (prompt.pageTitle.toLowerCase().includes('peta konsep') || (prompt.pageTitle.toLowerCase().includes('peta') && !prompt.pageTitle.toLowerCase().includes('titik kuis'))) ? (
+                                      <div className="flex flex-col items-center justify-center w-full py-0.5">
+                                        <div className="px-2 py-0.5 bg-forest-900 text-white rounded-md text-[7px] font-bold text-center shadow-2xs max-w-[130px] truncate">
+                                          🧠 {topic}
+                                        </div>
+                                        <div className="w-0.5 h-1 bg-forest-400 my-0.5"></div>
+                                        <div className="grid grid-cols-2 gap-1 w-full text-[6px]">
+                                          <div className="bg-teal-50 border border-teal-200 text-teal-900 rounded p-0.5 text-center font-bold">
+                                            {prompt.conceptMapData?.subConcepts[0]?.title || "Konsep Inti 1"}
+                                          </div>
+                                          <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded p-0.5 text-center font-bold">
+                                            {prompt.conceptMapData?.subConcepts[1]?.title || "Karakteristik"}
+                                          </div>
+                                          <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded p-0.5 text-center font-bold">
+                                            {prompt.conceptMapData?.subConcepts[2]?.title || "Penerapan Riil"}
+                                          </div>
+                                          <div className="bg-indigo-50 border border-indigo-200 text-indigo-900 rounded p-0.5 text-center font-bold">
+                                            {prompt.conceptMapData?.subConcepts[3]?.title || "Evaluasi"}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ) : prompt.pageTitle.toLowerCase().includes('video') ? (
+                                      <div className="flex flex-col items-center justify-center w-full bg-neutral-900 text-white rounded-lg p-2 py-2 shadow-2xs">
+                                        <div className="w-5 h-5 rounded-full bg-coral-500 text-white flex items-center justify-center text-[9px] shadow-sm mb-1">
+                                          ▶
+                                        </div>
+                                        <span className="text-[7px] font-bold text-neutral-200 text-center truncate max-w-[150px]">
+                                          Tayangan Video: {topic}
+                                        </span>
+                                        <span className="text-[5.5px] text-neutral-400 mt-0.5">
+                                          Durasi: 03:45 • Interaktif HD
+                                        </span>
+                                      </div>
+                                    ) : prompt.pageTitle.toLowerCase().includes('respon benar') ? (
                                   <div className="flex flex-col items-center text-center">
                                     <span className="text-xs">⭐⭐⭐</span>
                                     <span className="text-[8px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded-full mt-0.5">
@@ -3171,7 +3197,9 @@ export default function App() {
                                 <span>{prompt.estimatedTime}</span>
                                 <span className="text-forest-700 font-semibold">Tampilan Bersih</span>
                               </div>
-                            </div>
+                            </>
+                          ) : null}
+                        </div>
                           </div>
 
                           {/* Slide Bottom Action Pill Button */}
