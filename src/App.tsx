@@ -775,16 +775,34 @@ export default function App() {
     setMascotImageError(null);
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const result = event.target?.result as string;
       setMascotImage(result);
       setMascotImageName(file.name);
       const sizeKb = Math.round(file.size / 1024);
       setMascotImageSize(sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${sizeKb} KB`);
 
-      if (!customMascot.trim()) {
-        const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
-        setCustomMascot(`Karakter tutor kustom sesuai foto referensi "${cleanName}" dengan ekspresi ramah, menggemaskan, dan mendidik`);
+      const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+      setCustomMascot(`Sedang menganalisis karakter dari foto "${cleanName}" Anda...`);
+
+      try {
+        const response = await fetch('/api/analyze-mascot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: result })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.description) {
+            setCustomMascot(data.description);
+          } else {
+            setCustomMascot(`Karakter kustom sesuai foto referensi "${cleanName}" dengan gaya ramah, menggemaskan, dan mendidik`);
+          }
+        } else {
+          setCustomMascot(`Karakter kustom sesuai foto referensi "${cleanName}" dengan gaya ramah, menggemaskan, dan mendidik`);
+        }
+      } catch (err) {
+        setCustomMascot(`Karakter kustom sesuai foto referensi "${cleanName}" dengan gaya ramah, menggemaskan, dan mendidik`);
       }
     };
     reader.readAsDataURL(file);
@@ -1107,25 +1125,29 @@ export default function App() {
     if (!text) return "";
     let cleaned = text;
     
-    const breadcrumbRegexes = [
-      /\[?Cover\s*(➔|->|→|=>|>|•|&bull;)\s*Navigasi\s*(➔|->|→|=>|>|•|&bull;)\s*Materi\s*(➔|->|→|=>|>|•|&bull;)\s*Kuis\s*(➔|->|→|=>|>|•|&bull;)\s*Selesai\]?/gi,
-      /\[?Cover\s*(➔|->|→|=>|>|•|&bull;)\s*Navigasi\s*(➔|->|→|=>|>|•|&bull;)\s*Tujuan\s*(➔|->|→|=>|>|•|&bull;)\s*Kuis\s*(➔|->|→|=>|>|•|&bull;)\s*Selesai\]?/gi,
-      /\[?Cover\s*(➔|->|→|=>|>|•|&bull;)\s*Navigasi\s*(➔|->|→|=>|>|•|&bull;)\s*Apersepsi\s*(➔|->|→|=>|>|•|&bull;)\s*Materi\s*(➔|->|→|=>|>|•|&bull;)\s*Video\s*(➔|->|→|=>|>|•|&bull;)\s*Kuis\s*(➔|->|→|=>|>|•|&bull;)\s*Selesai\]?/gi,
-      /\[?Cover\s*(➔|->|→|=>|>|•|&bull;)\s*Navigasi\s*(➔|->|→|=>|>|•|&bull;)\s*Tujuan\s*(➔|->|→|=>|>|•|&bull;)\s*Apersepsi\s*(➔|->|→|=>|>|•|&bull;)\s*Peta\s*(➔|->|→|=>|>|•|&bull;)\s*Kuis\s*(➔|->|→|=>|>|•|&bull;)\s*Selesai\]?/gi,
-      /Cover\s*➔\s*Navigasi\s*➔\s*Materi\s*➔\s*Kuis\s*➔\s*Selesai/gi,
-      /Cover\s*➔\s*Navigasi\s*➔\s*Tujuan\s*➔\s*Kuis\s*➔\s*Selesai/gi,
-      /Cover\s*➔\s*Navigasi\s*➔\s*Apersepsi\s*➔\s*Materi\s*➔\s*Video\s*➔\s*Kuis\s*➔\s*Selesai/gi,
-      /\[?Cover\s*(➔|->|→|=>|>)\s*Navigasi\s*(➔|->|→|=>|>)\s*Materi\s*(➔|->|→|=>|>)\s*Kuis\s*(➔|->|→|=>|>)\s*Selesai\]?/gi
-    ];
+    // 1. Remove specific breadcrumb sequences with various delimiters
+    const chainRegex = /\[?(?:(?:Cover|Navigasi|Tujuan|Apersepsi|Peta|Mapping|Materi|Video|Kuis|Selesai|Selesai\s*🎓)\s*(?:➔|->|→|=>|>|•|&bull;)\s*)+(?:Cover|Navigasi|Tujuan|Apersepsi|Peta|Mapping|Materi|Video|Kuis|Selesai|Selesai\s*🎓)\]?/gi;
+    cleaned = cleaned.replace(chainRegex, "");
 
-    for (const regex of breadcrumbRegexes) {
+    // 2. Also match generic sequences of 2 or more words separated by arrows, e.g., A ➔ B ➔ C
+    const genericChainRegex = /\[?[A-Za-z0-9\s/&]+(?:\s*(?:➔|->|→|=>|>|•)\s*[A-Za-z0-9\s/&]+){2,}\]?/g;
+    cleaned = cleaned.replace(genericChainRegex, "");
+
+    // 3. Remove standalone occurrences of bracketed cover->navigation chains
+    const looseRegexes = [
+      /\[\s*Cover\s*➔\s*Navigasi\s*➔\s*Materi\s*➔\s*Kuis\s*➔\s*Selesai\s*\]/gi,
+      /Cover\s*➔\s*Navigasi\s*➔\s*Materi\s*➔\s*Kuis\s*➔\s*Selesai/gi,
+      /\[\s*Cover\s*➔\s*Navigasi\s*➔\s*Kuis\s*➔\s*Selesai\s*\]/gi
+    ];
+    for (const regex of looseRegexes) {
       cleaned = cleaned.replace(regex, "");
     }
 
-    // Remove loose arrows or brackets
-    cleaned = cleaned.replace(/^\s*(➔|->|→|=>|>)\s*/, "");
-    cleaned = cleaned.replace(/\s*(➔|->|→|=>|>)\s*$/, "");
+    // 4. Remove loose trailing or leading arrows and brackets
+    cleaned = cleaned.replace(/^\s*(➔|->|→|=>|>|•)\s*/, "");
+    cleaned = cleaned.replace(/\s*(➔|->|→|=>|>|•)\s*$/, "");
     cleaned = cleaned.replace(/\[\s*\]/g, "");
+    cleaned = cleaned.replace(/\(\s*\)/g, "");
     
     return cleaned.trim();
   };
@@ -1168,7 +1190,7 @@ export default function App() {
     if (titleLower.includes('cover') || titleLower.includes('sampul')) {
       slideSpecific = `Center displays a prominent, clean title banner reading "${topic}" with clean educational typography, subject badge "${subject}", and subtitle "${ageGroup}". Background features ${theme.bg}. Bottom center has a clean, tactile rounded action button "MULAI BELAJAR"`;
     } else if (titleLower.includes('navigasi') || titleLower.includes('menu')) {
-      slideSpecific = `Main menu navigation board. Displays six neat, modular white rounded card buttons organized in a balanced grid layout with clean matching icons: "1. Tujuan Pembelajaran" (icon: target), "2. Apersepsi" (icon: lightbulb), "3. Peta Pembelajaran" (icon: map), "4. Materi Inti" (icon: book), "5. Video Pembelajaran" (icon: play), and "6. Kuis Interaktif" (icon: game controller). Outstanding spacious layout, high contrast readability, clean typography. Highlighting 'Menu Navigasi' as the current active step in this lesson journey. Background features ${theme.bg}`;
+      slideSpecific = `Main menu navigation board. Displays exactly six neat, modular white rounded card buttons organized in a balanced grid layout (2 rows of 3 columns) with clean matching icons: "1. Petunjuk" (icon: info/guide), "2. Apersepsi" (icon: lightbulb/idea), "3. Peta Konsep" (icon: map/mapping), "4. Materi" (icon: open book/content), "5. Video" (icon: movie screen/play), and "6. Kuis" (icon: game controller). Outstanding spacious layout, high contrast readability, clean typography. Highlighting 'Menu Navigasi' as the current active step in this lesson journey. Background features ${theme.bg}`;
     } else if (titleLower.includes('tujuan') || titleLower.includes('indikator')) {
       slideSpecific = `Right side features a large clean white rounded card container with 3 neatly organized checklist items explaining learning goals for "${topic}". Ample negative space, high contrast typography. Background features ${theme.bg}`;
     } else if (titleLower.includes('apersepsi') || titleLower.includes('pengantar') || titleLower.includes('motivasi')) {
@@ -1297,9 +1319,12 @@ export default function App() {
         return [`Mempelajari konsep ${title}`, "Memahami relevansi materi", "Eksplorasi visual interaktif"];
       };
 
+      const cleanHeader = sanitizeHeaderText(headerText);
+      const fallbackTitle = pageTitle || "Materi Pembelajaran";
+
       return {
         pageTitle: `Halaman ${index + 1}: ${pageTitle}`,
-        headerText: sanitizeHeaderText(headerText),
+        headerText: cleanHeader || fallbackTitle.replace(/^\d+[\s.]*-?\s*/, ""),
         cleanPrompt: sanitizeHeaderText(cleanPrompt),
         midjourneyPrompt: sanitizeHeaderText(midjourneyPrompt),
         illustrationDesc: structuredSpec,
@@ -1399,9 +1424,13 @@ export default function App() {
             return [`Mempelajari konsep ${title}`, "Memahami relevansi materi", "Eksplorasi visual interaktif"];
           };
 
+          const cleanHeader = sanitizeHeaderText(p.headerText);
+          const fallbackTitle = pages[idx] || p.pageTitle || "Materi Pembelajaran";
+          const header = cleanHeader || fallbackTitle.replace(/^\d+[\s.]*-?\s*/, "");
+
           return {
             ...p,
-            headerText: sanitizeHeaderText(p.headerText || pages[idx] || p.pageTitle),
+            headerText: header,
             cleanPrompt: clean,
             midjourneyPrompt: sanitizeHeaderText(p.midjourneyPrompt || `${clean} --ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw`),
             illustrationDesc: sanitizeHeaderText(p.illustrationDesc || ''),
@@ -1528,7 +1557,7 @@ export default function App() {
               <Sparkles className="w-5 h-5 text-[#FDBA74]" />
             </div>
             <a href="/" className="text-xl font-bold tracking-tight text-forest-900 font-display">
-              EduSmart Lab
+              EduSmart Creator Lab
             </a>
           </div>
 
@@ -3025,11 +3054,50 @@ export default function App() {
                             {/* Right: Clean White Rounded Content Card with Generous Whitespace */}
                             <div className="col-span-8 bg-white/95 backdrop-blur-xs rounded-xl shadow-xs border border-white p-2.5 flex flex-col justify-between min-h-[90px]">
                               
-                              <div className="border-b border-neutral-100 pb-1">
-                                <p className="text-[10px] font-bold text-forest-950 leading-tight truncate">
-                                  {prompt.headerText}
-                                </p>
-                              </div>
+                              {(() => {
+                                const tLower = prompt.pageTitle.toLowerCase();
+                                let currentSecIdx = -1;
+                                if (tLower.includes('petunjuk') || tLower.includes('panduan')) currentSecIdx = 0;
+                                else if (tLower.includes('apersepsi') || tLower.includes('pengantar')) currentSecIdx = 1;
+                                else if (tLower.includes('peta') || tLower.includes('mapping') || tLower.includes('konsep')) currentSecIdx = 2;
+                                else if (tLower.includes('materi') || tLower.includes('inti')) currentSecIdx = 3;
+                                else if (tLower.includes('video') || tLower.includes('pembelajaran')) currentSecIdx = 4;
+                                else if (tLower.includes('kuis') || tLower.includes('soal') || tLower.includes('respon') || tLower.includes('benar') || tLower.includes('salah')) currentSecIdx = 5;
+
+                                const navItems = [
+                                  { name: "Petunjuk", icon: "📋" },
+                                  { name: "Apersepsi", icon: "💡" },
+                                  { name: "Peta", icon: "🗺️" },
+                                  { name: "Materi", icon: "📖" },
+                                  { name: "Video", icon: "🎬" },
+                                  { name: "Kuis", icon: "🎮" }
+                                ];
+
+                                return (
+                                  <div className="border-b border-neutral-100 pb-1 flex flex-col gap-1">
+                                    {currentSecIdx >= 0 && (
+                                      <div className="flex items-center gap-0.5 flex-wrap mb-0.5">
+                                        {navItems.map((item, sIdx) => (
+                                          <span 
+                                            key={sIdx} 
+                                            className={`text-[5px] px-1 py-0.2 rounded-xs font-bold transition-all flex items-center gap-0.5 ${
+                                              sIdx === currentSecIdx 
+                                                ? 'bg-forest-900 text-white shadow-2xs scale-105' 
+                                                : 'bg-[#FAF6EE] text-neutral-400 border border-neutral-200/40'
+                                            }`}
+                                          >
+                                            <span>{item.icon}</span>
+                                            <span>{item.name}</span>
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                    <p className="text-[10px] font-bold text-forest-950 leading-tight truncate">
+                                      {prompt.headerText}
+                                    </p>
+                                  </div>
+                                );
+                              })()}
 
                               {/* Card Body depending on slide type */}
                               <div className="my-1.5">
@@ -3478,13 +3546,13 @@ export default function App() {
                   className="mt-0.5 accent-coral-600"
                 />
                 <div>
-                  <strong className="text-forest-950 block">Gunakan Standar 13 Alur EduSmart Lab (Direkomendasikan)</strong>
+                  <strong className="text-forest-950 block">Gunakan Standar 13 Alur EduSmart Creator Lab (Direkomendasikan)</strong>
                   <span className="text-[11px] text-neutral-600 leading-snug block mt-0.5">
                     Menyusun alur lengkap: Cover, Navigasi, Tujuan, Apersepsi, Peta 4 Kuis, Kuis 1 s/d 4 (4 pertanyaan interaktif), Respon Benar, Respon Salah, Rangkuman, & Penutup.
                   </span>
                 </div>
               </label>
-
+              
               {detectedDocumentPages.length > 0 && (
                 <label className="flex items-start gap-2.5 cursor-pointer text-xs pt-2 border-t border-forest-200/40">
                   <input 
@@ -3519,7 +3587,7 @@ export default function App() {
                 onClick={applyConfirmedMaterial}
                 className="px-6 py-2.5 bg-coral-600 hover:bg-coral-700 text-white text-xs font-bold rounded-xl shadow-md cursor-pointer transition-all flex items-center gap-2 active:scale-95"
               >
-                <Check className="w-4 h-4 text-white" /> Konfirmasi & Terapkan Materi ke EduSmart Lab
+                <Check className="w-4 h-4 text-white" /> Konfirmasi & Terapkan Materi ke EduSmart Creator Lab
               </button>
             </div>
           </div>
@@ -3529,7 +3597,7 @@ export default function App() {
       {/* Footer */}
       <footer className="bg-white border-t border-[#FAF6EE] mt-12 py-8 text-center text-xs text-neutral-400">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p>&copy; 2026 EduSmart Lab - Media Pembelajaran Interaktif. Semua Hak Cipta Dilindungi.</p>
+          <p>&copy; 2026 EduSmart Creator Lab - Media Pembelajaran Interaktif. Semua Hak Cipta Dilindungi.</p>
           <div className="flex items-center gap-4">
             <span className="text-forest-800 font-semibold">Dibuat khusus untuk Pendidik Indonesia Berdaya</span>
             <span className="text-neutral-300">|</span>

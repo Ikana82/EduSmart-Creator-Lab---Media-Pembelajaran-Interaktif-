@@ -139,25 +139,33 @@ function sanitizeHeaderText(text: string): string {
   if (!text) return "";
   let cleaned = text;
   
-  const breadcrumbRegexes = [
-    /\[?Cover\s*(➔|->|→|=>|>|•|&bull;)\s*Navigasi\s*(➔|->|→|=>|>|•|&bull;)\s*Materi\s*(➔|->|→|=>|>|•|&bull;)\s*Kuis\s*(➔|->|→|=>|>|•|&bull;)\s*Selesai\]?/gi,
-    /\[?Cover\s*(➔|->|→|=>|>|•|&bull;)\s*Navigasi\s*(➔|->|→|=>|>|•|&bull;)\s*Tujuan\s*(➔|->|→|=>|>|•|&bull;)\s*Kuis\s*(➔|->|→|=>|>|•|&bull;)\s*Selesai\]?/gi,
-    /\[?Cover\s*(➔|->|→|=>|>|•|&bull;)\s*Navigasi\s*(➔|->|→|=>|>|•|&bull;)\s*Apersepsi\s*(➔|->|→|=>|>|•|&bull;)\s*Materi\s*(➔|->|→|=>|>|•|&bull;)\s*Video\s*(➔|->|→|=>|>|•|&bull;)\s*Kuis\s*(➔|->|→|=>|>|•|&bull;)\s*Selesai\]?/gi,
-    /\[?Cover\s*(➔|->|→|=>|>|•|&bull;)\s*Navigasi\s*(➔|->|→|=>|>|•|&bull;)\s*Tujuan\s*(➔|->|→|=>|>|•|&bull;)\s*Apersepsi\s*(➔|->|→|=>|>|•|&bull;)\s*Peta\s*(➔|->|→|=>|>|•|&bull;)\s*Kuis\s*(➔|->|→|=>|>|•|&bull;)\s*Selesai\]?/gi,
-    /Cover\s*➔\s*Navigasi\s*➔\s*Materi\s*➔\s*Kuis\s*➔\s*Selesai/gi,
-    /Cover\s*➔\s*Navigasi\s*➔\s*Tujuan\s*➔\s*Kuis\s*➔\s*Selesai/gi,
-    /Cover\s*➔\s*Navigasi\s*➔\s*Apersepsi\s*➔\s*Materi\s*➔\s*Video\s*➔\s*Kuis\s*➔\s*Selesai/gi,
-    /\[?Cover\s*(➔|->|→|=>|>)\s*Navigasi\s*(➔|->|→|=>|>)\s*Materi\s*(➔|->|→|=>|>)\s*Kuis\s*(➔|->|→|=>|>)\s*Selesai\]?/gi
-  ];
+  // 1. Remove specific breadcrumb sequences with various delimiters
+  const breadcrumbWords = /(?:Cover|Navigasi|Tujuan|Apersepsi|Peta|Mapping|Materi|Video|Kuis|Selesai|Selesai\s*🎓)/gi;
+  const delimiters = /(?:\s*(?:➔|->|→|=>|>|•|&bull;)\s*)/g;
+  
+  // Matches things like: [Cover ➔ Navigasi ➔ Materi ➔ Kuis ➔ Selesai] or Cover -> Navigasi
+  const chainRegex = /\[?(?:(?:Cover|Navigasi|Tujuan|Apersepsi|Peta|Mapping|Materi|Video|Kuis|Selesai|Selesai\s*🎓)\s*(?:➔|->|→|=>|>|•|&bull;)\s*)+(?:Cover|Navigasi|Tujuan|Apersepsi|Peta|Mapping|Materi|Video|Kuis|Selesai|Selesai\s*🎓)\]?/gi;
+  cleaned = cleaned.replace(chainRegex, "");
 
-  for (const regex of breadcrumbRegexes) {
+  // 2. Also match generic sequences of 2 or more words separated by arrows, e.g., A ➔ B ➔ C
+  const genericChainRegex = /\[?[A-Za-z0-9\s/&]+(?:\s*(?:➔|->|→|=>|>|•)\s*[A-Za-z0-9\s/&]+){2,}\]?/g;
+  cleaned = cleaned.replace(genericChainRegex, "");
+
+  // 3. Remove standalone occurrences of bracketed cover->navigation chains
+  const looseRegexes = [
+    /\[\s*Cover\s*➔\s*Navigasi\s*➔\s*Materi\s*➔\s*Kuis\s*➔\s*Selesai\s*\]/gi,
+    /Cover\s*➔\s*Navigasi\s*➔\s*Materi\s*➔\s*Kuis\s*➔\s*Selesai/gi,
+    /\[\s*Cover\s*➔\s*Navigasi\s*➔\s*Kuis\s*➔\s*Selesai\s*\]/gi
+  ];
+  for (const regex of looseRegexes) {
     cleaned = cleaned.replace(regex, "");
   }
 
-  // Remove loose arrows or brackets
-  cleaned = cleaned.replace(/^\s*(➔|->|→|=>|>)\s*/, "");
-  cleaned = cleaned.replace(/\s*(➔|->|→|=>|>)\s*$/, "");
+  // 4. Remove loose trailing or leading arrows and brackets
+  cleaned = cleaned.replace(/^\s*(➔|->|→|=>|>|•)\s*/, "");
+  cleaned = cleaned.replace(/\s*(➔|->|→|=>|>|•)\s*$/, "");
   cleaned = cleaned.replace(/\[\s*\]/g, "");
+  cleaned = cleaned.replace(/\(\s*\)/g, "");
   
   return cleaned.trim();
 }
@@ -319,6 +327,58 @@ function generateServerFallbackPrompts(payload: any) {
     };
   });
 }
+
+// API endpoint to analyze a custom mascot image in real-time
+app.post('/api/analyze-mascot', async (req: express.Request, res: express.Response) => {
+  const { image } = req.body;
+  if (!image) {
+    return res.status(400).json({ error: 'Tidak ada data gambar yang dikirimkan.' });
+  }
+
+  if (!ai) {
+    return res.json({ 
+      description: 'Karakter tutor kustom sesuai foto referensi dengan ekspresi ramah, menggemaskan, dan mendidik.' 
+    });
+  }
+
+  try {
+    const parsedImg = parseDataUrl(image);
+    if (!parsedImg) {
+      return res.status(400).json({ error: 'Format data gambar tidak valid.' });
+    }
+
+    const mascotAnalysisPrompt = `This is a reference photo for a custom educational mascot or teacher character. 
+Describe this character's visual appearance in 1-2 extremely concise sentences in English.
+Focus ONLY on:
+1. What species/type of character it is (e.g. a friendly young female teacher with dark brown hair wearing blue spectacles and a neat beige blazer, or a cute white fluffy rabbit with long ears).
+2. Its primary colors (e.g. orange coat, pastel mint vest).
+3. Distinctive features and facial expression (e.g. big shiny warm eyes, welcoming smile).
+Keep it short so we can use it as a highly consistent character description across all slide visual prompts.`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.8-flash',
+      contents: [
+        {
+          inlineData: {
+            mimeType: parsedImg.mimeType,
+            data: parsedImg.base64Data
+          }
+        },
+        {
+          text: mascotAnalysisPrompt
+        }
+      ]
+    });
+
+    const description = response.text?.trim() || '';
+    return res.json({ description });
+  } catch (err: any) {
+    console.error('Error in /api/analyze-mascot:', err);
+    return res.json({ 
+      description: 'Karakter tutor kustom sesuai foto referensi dengan ekspresi ramah, menggemaskan, dan mendidik.' 
+    });
+  }
+});
 
 // API endpoint for generating prompts using Gemini 3.8 Flash (with safe local fallback)
 app.post('/api/generate-prompts', async (req: express.Request, res: express.Response) => {
@@ -508,10 +568,12 @@ Harap kembalikan dalam struktur JSON Array valid.`;
     }
 
     const parsedPrompts = JSON.parse(textOutput.trim());
-    const sanitizedPrompts = parsedPrompts.map((p: any) => {
+    const sanitizedPrompts = parsedPrompts.map((p: any, idx: number) => {
+      const cleanHeader = sanitizeHeaderText(p.headerText);
+      const fallbackTitle = pages[idx] || p.pageTitle || "Materi Pembelajaran";
       return {
         ...p,
-        headerText: sanitizeHeaderText(p.headerText),
+        headerText: cleanHeader || fallbackTitle.replace(/^\d+[\s.]*-?\s*/, ""),
         cleanPrompt: sanitizeHeaderText(p.cleanPrompt),
         midjourneyPrompt: sanitizeHeaderText(p.midjourneyPrompt),
         illustrationDesc: sanitizeHeaderText(p.illustrationDesc)
