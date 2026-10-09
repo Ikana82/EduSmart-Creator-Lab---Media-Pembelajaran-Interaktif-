@@ -1608,10 +1608,17 @@ Atmosphere: Bright, cozy, friendly lighting, balanced composition with generous 
                       if (styleCategoryFilter === "Retro & Sci-Fi") return (style.category || '').includes("Retro") || (style.category || '').includes("Sci-Fi");
                       return true;
                     }).map((style) => (
-                      <button
+                      <div
                         key={style.id}
-                        type="button"
+                        role="button"
+                        tabIndex={0}
                         onClick={() => setVisualStyle(style.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setVisualStyle(style.id);
+                          }
+                        }}
                         className={`text-left p-4 rounded-xl border transition-all cursor-pointer flex flex-col gap-3 justify-between ${
                           visualStyle === style.id 
                             ? 'border-forest-700 bg-forest-50/40 ring-2 ring-forest-100 shadow-sm' 
@@ -1655,7 +1662,7 @@ Atmosphere: Bright, cozy, friendly lighting, balanced composition with generous 
                             </div>
                           </div>
                         </div>
-                      </button>
+                      </div>
                     ))}
                   </div>
                 </div>
