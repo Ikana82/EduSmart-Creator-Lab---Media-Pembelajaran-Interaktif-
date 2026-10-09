@@ -1328,11 +1328,11 @@ export default function App() {
       setAiEngineUsed(false);
 
       if (err.message === 'SERVER_STATIC_OR_OFFLINE') {
-        setGenerationError('Mode Standalone: Server backend berjalan pada mode statis (bukan JSON API). Seluruh prompt telah dirumuskan secara mulus menggunakan Mesin EduSmart Lokal berstandar premium.');
+        setGenerationError('Catatan Server: Unexpected token \'<\', "<!DOCTYPE "... is not valid JSON. Kami telah membuatkan prompt premium dengan Mesin Generator Cerdas EduSmart lokal.');
       } else if (err.message === 'SERVER_INVALID_JSON') {
-        setGenerationError('Respon server tidak terbaca sebagai JSON. Seluruh prompt telah digenerate dengan Mesin EduSmart Lokal.');
+        setGenerationError('Catatan Server: Respon tidak valid. Kami telah membuatkan prompt premium dengan Mesin Generator Cerdas EduSmart lokal.');
       } else {
-        setGenerationError(`Catatan: ${err.message || 'Layanan cloud tidak tersedia'}. Seluruh prompt telah berhasil dibuatkan dengan Mesin EduSmart Lokal.`);
+        setGenerationError(`Catatan Server: ${err.message || 'Koneksi terputus'}. Kami telah membuatkan prompt premium dengan Mesin Generator Cerdas EduSmart lokal.`);
       }
     } finally {
       setIsGenerating(false);
@@ -1384,9 +1384,15 @@ export default function App() {
 
   const resetWizard = () => {
     setResults(null);
+    setSubject("IPAS / Sains");
     setTopic("Ekosistem & Rantai Makanan");
+    setAgeGroup("SD Kelas Tinggi (9-11 tahun)");
+    setLearningObjective("Menganalisis hubungan makan dan dimakan antar komponen biotik dalam ekosistem.");
     setPages(STANDARD_13_PAGES);
+    setLayout("landscape");
     setVisualStyle("Flat Cartoon / 2D Vector Education");
+    setDetailLevel("clean-minimalis");
+    setLanguage("Indonesia");
     setMascotType("generate");
     setCustomMascot("");
     setMascotImage(null);
@@ -1395,6 +1401,26 @@ export default function App() {
     setGenerationError(null);
     setCurrentStep(1);
     setSelectedAnswers({});
+    
+    // Reset secondary input/file/UI states
+    setNewPageName("");
+    setEditingPageIndex(null);
+    setEditingPageValue("");
+    setUploadedFileName(null);
+    setUploadedSummary(null);
+    setPastedNotes("");
+    setShowPasteNotes(false);
+    setCardViewModes({});
+    setShowConfirmModal(false);
+    setExtractedCleanText("");
+    setConfirmTitle("");
+    setConfirmAgeGroup("SD Kelas Tinggi (9-11 tahun)");
+    setConfirmSummary("");
+    setConfirmStructureChoice("standard13");
+    setDetectedDocumentPages([]);
+    setConfirmSuccessNotice(false);
+    setMascotImageError(null);
+    setFileUploadError(null);
   };
 
   return (
@@ -2972,9 +2998,26 @@ export default function App() {
 
                           {/* Slide Bottom Action Pill Button */}
                           <div className="flex items-center justify-end z-10 pt-1">
-                            <div className="px-3 py-1 bg-gradient-to-r from-coral-500 to-coral-600 text-white text-[9px] font-bold rounded-full shadow-xs flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (prompt.navigationButtons.includes("ULANGI") || index === results.length - 1) {
+                                  resetWizard();
+                                }
+                              }}
+                              className={`px-3 py-1 bg-gradient-to-r from-coral-500 to-coral-600 text-white text-[9px] font-bold rounded-full shadow-xs flex items-center gap-1 transition-all active:scale-95 ${
+                                (prompt.navigationButtons.includes("ULANGI") || index === results.length - 1) 
+                                  ? "cursor-pointer hover:from-coral-600 hover:to-coral-700 hover:shadow-xs ring-2 ring-coral-300" 
+                                  : "opacity-90 cursor-default"
+                              }`}
+                              title={
+                                (prompt.navigationButtons.includes("ULANGI") || index === results.length - 1) 
+                                  ? "Klik untuk Reset & Ulangi Alur" 
+                                  : ""
+                              }
+                            >
                               <span>▶</span> {prompt.navigationButtons.split(',')[0].trim()}
-                            </div>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -3187,6 +3230,18 @@ export default function App() {
                 className="px-5 py-3 bg-coral-600 hover:bg-coral-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shrink-0 flex items-center gap-1.5 cursor-pointer hover:shadow-coral-600/30 active:scale-95"
               >
                 Buka Canva <ExternalLink className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Bottom Reset & Restart Actions Block */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 py-6 border-t border-dashed border-[#EBE3D3] mt-4 animate-fade-in">
+              <button
+                type="button"
+                onClick={resetWizard}
+                className="w-full sm:w-auto px-8 py-4 bg-white hover:bg-neutral-50 text-forest-900 hover:text-forest-950 font-bold rounded-2xl border border-neutral-200 transition-all cursor-pointer shadow-xs flex items-center justify-center gap-2 text-sm font-display active:scale-95 hover:shadow-md"
+              >
+                <RefreshCw className="w-4 h-4 text-coral-600 animate-spin-slow" />
+                Reset & Rancang Media Baru
               </button>
             </div>
 
