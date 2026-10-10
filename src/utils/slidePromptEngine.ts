@@ -14,7 +14,84 @@ export interface PromptEngineOptions {
     type: string;
     description?: string;
     imageName?: string | null;
+    hasSecondaryCharacter?: boolean;
+    secondaryDescription?: string;
+    characterRelationship?: string;
   };
+}
+
+export function deriveObjectiveFromTopic(topicName: string = '', subjectName: string = ''): string {
+  const clean = (topicName || '').trim();
+  if (!clean) {
+    return 'Menganalisis materi pembelajaran dan menguasai konsep esensial secara terstruktur.';
+  }
+
+  const lower = clean.toLowerCase();
+
+  // 1. Topic-specific curated educational objectives
+  if (lower.includes('ekosistem') || lower.includes('rantai makanan')) {
+    return 'Menganalisis hubungan makan dan dimakan antar komponen biotik dalam ekosistem.';
+  }
+  if (lower.includes('tata surya') || lower.includes('planet')) {
+    return 'Menganalisis susunan tata surya dan karakteristik fisik planet-planet pengitari matahari.';
+  }
+  if (lower.includes('pecahan') || lower.includes('fraksi')) {
+    return 'Memvisualisasikan konsep pecahan senilai dan melakukan perbandingan visual pecahan secara tepat.';
+  }
+  if (lower.includes('metamorfosis') || lower.includes('kupu') || lower.includes('katak')) {
+    return 'Mengidentifikasi dan mengurutkan tahapan siklus hidup metamorfosis sempurna dan tidak sempurna.';
+  }
+  if (lower.includes('fotosintesis') || lower.includes('tumbuhan')) {
+    return 'Memahami proses fotosintesis pada tumbuhan hijau dan faktor-faktor yang mempengaruhinya.';
+  }
+  if (lower.includes('siklus air') || lower.includes('hidrologi') || lower.includes('hujan')) {
+    return 'Menganalisis tahapan siklus air (evaporasi, kondensasi, presipitasi) dan perannya bagi bumi.';
+  }
+  if (lower.includes('keragaman') || lower.includes('budaya') || lower.includes('suku') || lower.includes('nusantara')) {
+    return 'Mengenal rumah adat, pakaian tradisional, dan semboyan pemersatu bangsa.';
+  }
+  if (lower.includes('fabel') || lower.includes('cerita') || lower.includes('ide pokok') || lower.includes('literasi')) {
+    return 'Menemukan ide pokok dalam teks bacaan naratif dan mengidentifikasi amanat karakter tokoh.';
+  }
+  if (lower.includes('hewan') && (lower.includes('suara') || lower.includes('peliharaan'))) {
+    return 'Mengenali rupa hewan peliharaan, suara khasnya, dan makanannya secara ceria.';
+  }
+  if (lower.includes('pancasila') || lower.includes('gotong royong') || lower.includes('ppkn')) {
+    return 'Mengamalkan nilai-nilai luhur Pancasila dalam lingkungan sekolah dan masyarakat.';
+  }
+  if (lower.includes('pernapasan') || lower.includes('respirasi') || lower.includes('paru-paru') || lower.includes('napas')) {
+    return 'Menganalisis mekanisme organ pernapasan manusia dan cara memelihara kesehatan sistem pernapasan.';
+  }
+  if (lower.includes('pencernaan') || lower.includes('lambung') || lower.includes('usus')) {
+    return 'Menjelaskan fungsi dan alur organ saluran pencernaan makanan pada tubuh manusia.';
+  }
+  if (lower.includes('energi') || lower.includes('listrik') || lower.includes('magnet')) {
+    return 'Menganalisis macam-macam bentuk energi, perubahan bentuk energi, dan pemanfaatannya.';
+  }
+  if (lower.includes('bangun datar') || lower.includes('geometri')) {
+    return 'Mengidentifikasi sifat-sifat bangun datar dan menghitung keliling serta luas sederhana.';
+  }
+  if (lower.includes('komputer') || lower.includes('algoritma') || lower.includes('coding')) {
+    return 'Memahami perangkat keras komputer dan konsep dasar logika komputasi terstruktur.';
+  }
+
+  // 2. Subject-aware heuristics
+  const subLower = (subjectName || '').toLowerCase();
+  if (subLower.includes('matematika')) {
+    return `Memahami konsep matematika ${clean} dan menyelesaikan soal pemecahan masalah secara terstruktur.`;
+  }
+  if (subLower.includes('bahasa')) {
+    return `Menganalisis gagasan utama dan menyusun pemahaman kritis seputar materi ${clean}.`;
+  }
+  if (subLower.includes('sejarah') || subLower.includes('ips')) {
+    return `Mempelajari peristiwa penting dan nilai kearifan lokal terkait materi ${clean}.`;
+  }
+  if (subLower.includes('sains') || subLower.includes('ipa') || subLower.includes('ipas')) {
+    return `Menyelidiki fenomena alam dan konsep ilmiah terkait ${clean} melalui pengamatan logis.`;
+  }
+
+  // 3. Adaptive fallback
+  return `Menganalisis konsep dasar ${clean} serta penerapannya dalam kehidupan sehari-hari.`;
 }
 
 export function getSubjectAdaptiveDetails(subject: string = '', topic: string = '') {
@@ -275,6 +352,234 @@ export function buildTopicQuizData(topic: string, subject: string, qIndex: numbe
 /**
  * Build deterministic, perfectly synchronized SlideIdentity for any slide
  */
+export interface AuthoritativePromptParams {
+  slideType: SlideType;
+  headerText: string;
+  topic: string;
+  subject: string;
+  ageGroup: string;
+  layout: 'landscape' | 'portrait';
+  visualStyle: string;
+  styleClause: string;
+  characterClause: string;
+  slideSpecificLayoutPrompt: string;
+  theme: { bg: string; palette: string; canvaKeywords: string };
+  slideContent: string[];
+  visibleTexts?: string[];
+  navigationButtons: string;
+  estimatedTime: string;
+  quizData?: QuizQuestionData;
+  conceptMapData?: ConceptMapData;
+  guidePoints?: Array<{ icon: string; title: string; desc: string }>;
+  videoPlaceholderTopic?: string;
+}
+
+export function compileAuthoritativeSlidePrompt(params: AuthoritativePromptParams): string {
+  const {
+    slideType,
+    headerText,
+    topic,
+    subject,
+    ageGroup,
+    layout,
+    styleClause,
+    characterClause,
+    slideSpecificLayoutPrompt,
+    theme,
+    slideContent,
+    navigationButtons,
+    estimatedTime,
+    quizData,
+    conceptMapData,
+    guidePoints
+  } = params;
+
+  const aspect = layout === 'portrait' ? '9:16 portrait ratio' : '16:9 landscape ratio';
+  const actionBtn = navigationButtons ? navigationButtons.split(',')[0].trim() : 'LANJUT';
+
+  // Construct EXACT TEXT TO DISPLAY strictly based on active slide data
+  let exactTextSection = "";
+
+  switch (slideType) {
+    case 'cover': {
+      exactTextSection = `EXACT TEXT TO DISPLAY (VERBATIM ON SLIDE UI):
+- Header Category Label: "MEDIA PEMBELAJARAN INTERAKTIF"
+- Main Title: "${topic || headerText}"
+- Subject Badge: "Mata Pelajaran: ${subject}"
+- Target Class / Level: "Sasaran: ${ageGroup}"
+- Primary Action Button: "${actionBtn}"`;
+      break;
+    }
+
+    case 'navigation': {
+      exactTextSection = `EXACT TEXT TO DISPLAY (VERBATIM ON SLIDE UI):
+- Main Header Title: "${headerText}"
+- 6 Interactive Menu Buttons (2x3 Grid):
+  1. "1. Petunjuk"
+  2. "2. Apersepsi"
+  3. "3. Peta Konsep"
+  4. "4. Materi"
+  5. "5. Video"
+  6. "6. Kuis"
+- Primary Action Button: "${actionBtn}"
+- Duration Badge: "${estimatedTime}"`;
+      break;
+    }
+
+    case 'guide': {
+      const gPoints = guidePoints && guidePoints.length > 0 ? guidePoints : [
+        { icon: "👆", title: "Navigasi Tombol", desc: "Gunakan tombol panah untuk berpindah halaman materi" },
+        { icon: "🎧", title: "Media & Interaksi", desc: "Putar audio & video penjelasan interaktif" },
+        { icon: "📝", title: "Aktivitas & Kuis", desc: "Jawab kuis evaluasi pemahaman belajar" }
+      ];
+      exactTextSection = `EXACT TEXT TO DISPLAY (VERBATIM ON SLIDE UI):
+- Main Header Title: "${headerText}"
+- Active Section Pill: "Petunjuk"
+- Numbered Guide Points:
+${gPoints.map((g, i) => `  • "${i + 1}. ${g.title}: ${g.desc}"`).join('\n')}
+- Primary Action Button: "${actionBtn}"
+- Duration Badge: "${estimatedTime}"`;
+      break;
+    }
+
+    case 'apperception': {
+      exactTextSection = `EXACT TEXT TO DISPLAY (VERBATIM ON SLIDE UI):
+- Main Header Title: "${headerText}"
+- Active Section Pill: "Apersepsi"
+- Curiosity Prompts:
+  • "Mari amati fenomena sekitar kita!"
+  • "Bagaimana hal ini terjadi pada ${topic}?"
+  • "Yuk temukan jawabannya di materi berikut!"
+- Primary Action Button: "${actionBtn}"
+- Duration Badge: "${estimatedTime}"`;
+      break;
+    }
+
+    case 'concept_map': {
+      const cData = conceptMapData || buildTopicConceptMapData(topic, subject);
+      exactTextSection = `EXACT TEXT TO DISPLAY (VERBATIM ON SLIDE UI):
+- Main Header Title: "${headerText}"
+- Active Section Pill: "Peta Konsep"
+- Central Concept Node: "🧠 ${cData.centralConcept}"
+- 4 Sub-Concept Nodes:
+${cData.subConcepts.map((s, i) => `  • Node ${i + 1}: "${s.title} (${s.desc})"`).join('\n')}
+- Connecting Relationships:
+${cData.connectingRelationships.map((r, i) => `  • Relasi ${i + 1}: "${r}"`).join('\n')}
+- Primary Action Button: "${actionBtn}"
+- Duration Badge: "${estimatedTime}"`;
+      break;
+    }
+
+    case 'material': {
+      const contentList = slideContent && slideContent.length > 0 ? slideContent : [
+        `Definisi & prinsip utama ${topic} dalam mata pelajaran ${subject}`,
+        `Karakteristik spesifik dan hubungan antar unsur materi`,
+        `Fakta edukatif penting yang perlu dipahami siswa`
+      ];
+      exactTextSection = `EXACT TEXT TO DISPLAY (VERBATIM ON SLIDE UI):
+- Main Header Title: "${headerText}"
+- Active Section Pill: "Materi"
+- Core Lesson Content:
+${contentList.map((c) => `  • "${c.replace(/^[•*-]\s*/, '')}"`).join('\n')}
+- Primary Action Button: "${actionBtn}"
+- Duration Badge: "${estimatedTime}"`;
+      break;
+    }
+
+    case 'video': {
+      exactTextSection = `EXACT TEXT TO DISPLAY (VERBATIM ON SLIDE UI):
+- Main Header Title: "${headerText}"
+- Active Section Pill: "Video"
+- Video Player Title: "Tayangan Video: ${topic}"
+- Video Metadata: "Durasi: 03:45 • Interaktif HD"
+- Primary Action Button: "${actionBtn}"
+- Duration Badge: "${estimatedTime}"`;
+      break;
+    }
+
+    case 'quiz': {
+      const q = quizData || buildTopicQuizData(topic, subject, 0);
+      exactTextSection = `EXACT TEXT TO DISPLAY (VERBATIM ON SLIDE UI):
+- Main Header Title: "${headerText}"
+- Active Section Pill: "Kuis"
+- Question Prompt: "${q.question}"
+- Multiple-Choice Options:
+  • "A. ${q.options[0].replace(/^[A-D]\.\s*/, '')}"
+  • "B. ${q.options[1].replace(/^[A-D]\.\s*/, '')}"
+  • "C. ${(q.options[2] || 'Opsi C').replace(/^[A-D]\.\s*/, '')}"
+  • "D. ${(q.options[3] || 'Opsi D').replace(/^[A-D]\.\s*/, '')}"
+- Primary Action Button: "${actionBtn}"
+- Duration Badge: "${estimatedTime}"`;
+      break;
+    }
+
+    case 'feedback_correct': {
+      exactTextSection = `EXACT TEXT TO DISPLAY (VERBATIM ON SLIDE UI):
+- Main Header Title: "${headerText}"
+- Achievement Badge: "⭐⭐⭐ JAWABAN BENAR!"
+- Congratulatory Feedback: "Pilihanmu tepat! Kamu telah memahami konsep materi ini dengan sangat baik."
+- Primary Action Button: "${actionBtn}"
+- Duration Badge: "${estimatedTime}"`;
+      break;
+    }
+
+    case 'feedback_incorrect': {
+      exactTextSection = `EXACT TEXT TO DISPLAY (VERBATIM ON SLIDE UI):
+- Main Header Title: "${headerText}"
+- Encouragement Badge: "💡 AYO COBA LAGI!"
+- Supportive Feedback: "Jangan berkecil hati! Periksa kembali materi atau buka petunjuk untuk menemukan jawaban yang benar."
+- Primary Action Button: "${actionBtn}"
+- Duration Badge: "${estimatedTime}"`;
+      break;
+    }
+
+    case 'summary_closing': {
+      const contentList = slideContent && slideContent.length > 0 ? slideContent : [
+        `Intisari materi ${topic} telah dipelajari dengan seksama`,
+        "Siswa berhasil menyelesaikan seluruh misi pembelajaran",
+        "Terima kasih atas semangat belajar yang luar biasa!"
+      ];
+      exactTextSection = `EXACT TEXT TO DISPLAY (VERBATIM ON SLIDE UI):
+- Main Header Title: "${headerText}"
+- Closing Achievement: "Misi Pembelajaran Selesai!"
+- Key Takeaways:
+${contentList.map((c, i) => `  • "${i + 1}. ${c.replace(/^[•*-\d.]+\s*/, '')}"`).join('\n')}
+- Primary Action Button: "${actionBtn}"
+- Duration Badge: "${estimatedTime}"`;
+      break;
+    }
+
+    default: {
+      const contentList = slideContent && slideContent.length > 0 ? slideContent : [
+        `Poin materi penting seputar ${topic}`,
+        `Penjelasan terstruktur dan mudah dipahami siswa`
+      ];
+      exactTextSection = `EXACT TEXT TO DISPLAY (VERBATIM ON SLIDE UI):
+- Main Header Title: "${headerText}"
+- Content Points:
+${contentList.map((c) => `  • "${c.replace(/^[•*-]\s*/, '')}"`).join('\n')}
+- Primary Action Button: "${actionBtn}"
+- Duration Badge: "${estimatedTime}"`;
+      break;
+    }
+  }
+
+  return `Clean educational presentation slide UI, ${aspect}.
+FORMAT & VISUAL STYLE: ${styleClause}. ${characterClause}. Background features ${theme.bg} with soft ambient studio lighting, sharp focus, 8k resolution, clean modern aesthetic.
+COMPOSITION & LAYOUT: ${slideSpecificLayoutPrompt}. Minimalist modular white rounded card container with subtle soft drop shadow, generous whitespace, zero visual clutter, content-first presentation layout.
+
+${exactTextSection}
+
+TYPOGRAPHIC HIERARCHY:
+- Main Headline: Large bold high-contrast navy typography for "${headerText || topic}".
+- Subtitle & Metadata: Clean sans-serif badges with high readability.
+- Body Content: Legible, neatly spaced text for bullet points and descriptions.
+- Action Button: Bold tactile pill button at bottom with clear action callout "${actionBtn}".
+
+READABILITY & CLARITY RULES:
+All visible text must be completely sharp, fully legible, correctly spelled in Indonesian, never covered by mascot or decorative elements, with ample padding and zero visual clutter.`;
+}
+
 export function buildSlideIdentity(
   pageTitle: string,
   index: number,
@@ -287,14 +592,34 @@ export function buildSlideIdentity(
   const aspect = layout === 'portrait' ? '9:16 vertical portrait' : '16:9 landscape';
   const slideId = `slide-${index + 1}-${slideType}`;
 
-  // Mascot clause formulation
+  // Mascot clause formulation (CRITICAL: NEVER INJECT ROBOT UNLESS EXPLICITLY REQUESTED)
   let characterClause = "Left side features a friendly, smiling tutor character gesturing politely towards the content without covering text";
   if (mascot?.type === 'none') {
-    characterClause = "Minimalist presentation slide UI focused purely on core diagrams and lesson content without mascot characters";
-  } else if (mascot?.type === 'custom' && mascot?.imageName) {
-    characterClause = `Left side features a friendly tutor character inspired by reference photo ("${mascot.imageName}", ${mascot?.description || 'tutor companion'}), smiling and gesturing towards content without covering text`;
-  } else if (mascot?.description) {
-    characterClause = `Left side features a friendly educational companion (${mascot.description}) smiling politely and gesturing towards content`;
+    characterClause = "Minimalist presentation slide UI focused purely on core diagrams and lesson content without mascot characters or robots";
+  } else if (mascot?.type === 'custom') {
+    const hasSec = mascot.hasSecondaryCharacter && mascot.secondaryDescription?.trim();
+    if (mascot.imageName) {
+      if (hasSec) {
+        characterClause = `Left side features two friendly educational companions: primary tutor inspired by reference photo ("${mascot.imageName}", ${mascot.description || 'tutor companion'}) and a companion (${mascot.secondaryDescription}), both smiling politely and gesturing towards content without covering text (strictly NO robot unless explicitly specified)`;
+      } else {
+        characterClause = `Left side features a friendly tutor character inspired by reference photo ("${mascot.imageName}", ${mascot.description || 'tutor companion'}), smiling and gesturing towards content without covering text (strictly NO robot unless explicitly specified)`;
+      }
+    } else if (mascot.description?.trim()) {
+      if (hasSec) {
+        characterClause = `Left side features two friendly educational companions (${mascot.description} and companion ${mascot.secondaryDescription}) smiling politely and gesturing towards content without covering text (strictly NO robot unless explicitly specified)`;
+      } else {
+        characterClause = `Left side features a friendly educational companion (${mascot.description}) smiling politely and gesturing towards content without covering text (strictly NO robot unless explicitly specified)`;
+      }
+    } else {
+      characterClause = "Left side features a friendly educational companion smiling politely and gesturing towards content without covering text";
+    }
+  } else if (mascot?.type === 'generate') {
+    const lowerTopic = `${topic} ${subject}`.toLowerCase();
+    const isRoboticsTopic = lowerTopic.includes('robot') || lowerTopic.includes('kecerdasan buatan') || lowerTopic.includes('robotika');
+    const companionArchetype = isRoboticsTopic
+      ? "a friendly little AI robot tutor"
+      : `a cheerful, friendly student tutor in neat school attire representing ${subject}`;
+    characterClause = `Left side features ${companionArchetype} smiling politely and gesturing towards the presentation card without obscuring text`;
   }
 
   // Style clause
@@ -340,7 +665,33 @@ export function buildSlideIdentity(
       ];
       navigationButtons = "MULAI BELAJAR!";
       estimatedTime = "1 Menit";
-      slideSpecificLayoutPrompt = `Opening cover slide. Left side features a friendly, smiling 3D robot tutor holding a book and pointing politely towards the large white information panel on the right. Right side features a very large, clean white information panel with high text contrast. Top of the panel displays blue label "MEDIA PEMBELAJARAN INTERAKTIF". Center of the panel displays main lesson title: "${topic}" in giant, bold, clear navy blue typography. Bottom of the panel displays "${subject} - ${ageGroup}". Background is soft light blue with clean ambient studio lighting and generous whitespace. NO menu lists, NO quiz questions, NO breadcrumb chains.`;
+
+      // Dynamically determine left side visual on cover: STRICTLY NO ROBOT UNLESS EXPLICITLY REQUESTED!
+      let coverLeftVisual = "";
+      if (mascot?.type === 'none') {
+        coverLeftVisual = `Left side features a clean, beautifully stylized conceptual educational graphic representing "${topic}" for ${subject} (modern minimalist educational visual, NO mascot character, NO robot)`;
+      } else if (mascot?.type === 'custom') {
+        const hasSec = mascot.hasSecondaryCharacter && mascot.secondaryDescription?.trim();
+        const primaryDesc = mascot.imageName
+          ? `custom character inspired by reference photo "${mascot.imageName}" (${mascot.description || 'tutor companion'})`
+          : (mascot.description || 'friendly custom tutor companion');
+        
+        if (hasSec) {
+          coverLeftVisual = `Left side features the custom primary character (${primaryDesc}) alongside companion character (${mascot.secondaryDescription}), holding an educational prop and pointing politely towards the large white information panel on the right (strictly NO robot unless explicitly requested)`;
+        } else {
+          coverLeftVisual = `Left side features the custom character (${primaryDesc}) holding an educational book/prop and pointing politely towards the large white information panel on the right (strictly NO robot unless explicitly requested)`;
+        }
+      } else {
+        // AI Generated mascot: adaptive to subject/topic, NOT a default robot!
+        const lowerTopic = `${topic} ${subject}`.toLowerCase();
+        const isRobotics = lowerTopic.includes('robot') || lowerTopic.includes('kecerdasan buatan') || lowerTopic.includes('robotika');
+        const mascotChar = isRobotics 
+          ? "a friendly smiling 3D robot tutor" 
+          : `a friendly smiling student tutor in neat school attire representing ${subject}`;
+        coverLeftVisual = `Left side features ${mascotChar} holding an open book and pointing politely towards the large white information panel on the right`;
+      }
+
+      slideSpecificLayoutPrompt = `Opening cover slide. ${coverLeftVisual}. Right side features a very large, clean white information panel with high text contrast. Top of the panel displays blue label "MEDIA PEMBELAJARAN INTERAKTIF". Center of the panel displays main lesson title: "${topic}" in giant, bold, clear navy blue typography. Bottom of the panel displays "${subject} - ${ageGroup}". Background is soft light blue with clean ambient studio lighting, generous whitespace, and zero visual clutter. NO menu lists, NO quiz questions, NO breadcrumb chains.`;
       break;
     }
 
@@ -426,7 +777,9 @@ export function buildSlideIdentity(
 
     case 'material': {
       headerText = `Materi Inti: ${topic}`;
-      educationalObjective = `Menjelaskan konsep utama dan mekanisme penting dalam materi "${topic}".`;
+      educationalObjective = (options.learningObjective && options.learningObjective.trim())
+        ? options.learningObjective.trim()
+        : `Menjelaskan konsep utama dan mekanisme penting dalam materi "${topic}".`;
       visibleTexts = [
         `Konsep 1: Pemahaman dasar tentang ${topic}`,
         `Konsep 2: Komponen dan fungsi penting`,
@@ -547,20 +900,44 @@ export function buildSlideIdentity(
     }
   }
 
-  const detailClause = "Ultra-clean minimalist composition, generous negative space (ample whitespace), zero visual clutter, neat rounded white card container with subtle soft drop shadow, high text contrast, no floating confetti or glitter particles, content-first layout";
 
-  const cleanPrompt = `Clean educational presentation slide UI, ${aspect} aspect ratio. Style: ${styleClause}. ${characterClause}. ${slideSpecificLayoutPrompt}. ${detailClause}. Soft ambient studio lighting, sharp focus, 8k resolution, UI/UX educational presentation mockup.`;
+
+  const cleanPrompt = compileAuthoritativeSlidePrompt({
+    slideType,
+    headerText,
+    topic,
+    subject,
+    ageGroup,
+    layout,
+    visualStyle,
+    styleClause,
+    characterClause,
+    slideSpecificLayoutPrompt,
+    theme,
+    slideContent,
+    visibleTexts,
+    navigationButtons,
+    estimatedTime,
+    quizData,
+    conceptMapData,
+    guidePoints,
+    videoPlaceholderTopic
+  });
+
   const midjourneyPrompt = `${cleanPrompt} --ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw`;
 
   const structuredSpec = `📐 Layout: ${layout === 'portrait' ? '9:16 Portrait (1080x1920 px)' : '16:9 Landscape (1920x1080 px)'}
 🏷️ Jenis Halaman: ${slideType.toUpperCase()}
 📚 Mata Pelajaran: ${subject} | Topik: "${topic}"
 🎯 Sasaran: ${ageGroup}
+🎯 Tujuan Pembelajaran: ${options.learningObjective && options.learningObjective.trim() ? options.learningObjective.trim() : educationalObjective}
 ✨ Tingkat Detail: ${detailLevel}
 🎨 Gaya Visual: ${visualStyle}
 🌿 Latar Belakang: ${theme.bg}
 🧑‍🎓 Karakter: ${characterClause}
 📄 Teks Wajib Tampil: ${visibleTexts.join(" | ")}
+📝 Poin Materi: ${slideContent.join(" | ")}
+🔘 Tombol Navigasi: ${navigationButtons} (Estimasi: ${estimatedTime})
 🎨 Palet Warna: ${theme.palette}
 🔍 Kata Kunci Canva: ${theme.canvaKeywords}`;
 

@@ -45,7 +45,7 @@ import {
   Palette,
   Wand2
 } from 'lucide-react';
-import { buildSlideIdentity, buildTopicConceptMapData, buildTopicQuizData } from './utils/slidePromptEngine';
+import { buildSlideIdentity, buildTopicConceptMapData, buildTopicQuizData, deriveObjectiveFromTopic } from './utils/slidePromptEngine';
 import { detectSlideType } from './types/slideTypes';
 
 export const STANDARD_13_PAGES = [
@@ -314,9 +314,9 @@ const LANGUAGES = [
 ];
 
 const MASCOT_TYPES = [
-  { id: "generate", name: "Rekomendasi AI", desc: "AI akan otomatis merancang maskot lucu yang paling relevan dengan topik pilihan Anda." },
-  { id: "custom", name: "Kustom Mandiri", desc: "Tulis sendiri deskripsi karakter atau unggah foto/gambar karakter Anda." },
-  { id: "none", name: "Tanpa Maskot", desc: "Desain materi pembelajaran yang bersih, fokus penuh pada bagan konten sains tanpa karakter pendamping." }
+  { id: "generate", name: "Rekomendasi AI", desc: "AI otomatis merancang tutor pendamping ramah sesuai topik Anda (tanpa robot kecuali topik teknologi/AI)." },
+  { id: "custom", name: "Kustom Mandiri", desc: "Tulis sendiri deskripsi karakter atau unggah foto. Sistem akan menanyakan apakah ingin 1 karakter atau menambah karakter lain." },
+  { id: "none", name: "Tanpa Maskot", desc: "Desain materi pembelajaran yang bersih, fokus penuh pada diagram sains & konten tanpa karakter atau robot." }
 ];
 
 export const MASCOT_STYLE_RECOMMENDATIONS = [
@@ -366,12 +366,20 @@ export const DETAIL_LEVELS = [
 ];
 
 export const MASCOT_CHARACTER_ARCHETYPES = [
-  { name: "🤖 Robot Sains Ramah", desc: "Robot cilik berwarna putih-biru berkacamata pintar dan membawa tablet interaktif sains" },
+  { name: "👩‍🏫 Ibu Guru Ceria", desc: "Ibu guru muda ramah berbusana rapi, tersenyum hangat memegang buku panduan belajar" },
+  { name: "🎒 Siswa Sekolah Cilik", desc: "Siswa sekolah berseragam rapi, ceria, membawa tas ransel dan antusias belajar" },
   { name: "🐰 Kelinci Penjelajah", desc: "Kelinci cerdik berjaket penjelajah membawa kaca pembesar dan tas ransel petualangan" },
-  { name: "🎒 Siswa Berjas Lab", desc: "Siswa sekolah ceria mengenakan jas laboratorium mini dan lencana bintang sains" },
-  { name: "🐱 Kucing Astronot", desc: "Kucing putih imut memakai helm astronot transparan dengan ekor berayun ramah" },
-  { name: "🦉 Burung Hantu Bijak", desc: "Burung hantu kecil memakai topi toga mini dan kacamata bulat bijaksana" },
-  { name: "🦕 Dinosaurus Cilik", desc: "Dinosaurus herbivora mini berwarna hijau daun yang tersenyum ramah dan menggemaskan" }
+  { name: "🦉 Burung Hantu Bijak", desc: "Burung hantu kecil memakai kacamata bulat dan topi ilmuwan yang bijaksana" },
+  { name: "🐱 Kucing Peneliti", desc: "Kucing putih imut memakai rompi laboratorium dengan ekspresi ramah penasaran" },
+  { name: "🦕 Dinosaurus Cilik", desc: "Dinosaurus herbivora mini berwarna hijau daun yang tersenyum ramah dan menggemaskan" },
+  { name: "🤖 Robot Sains (Hanya jika diminta)", desc: "Robot cilik putih-biru berkacamata pintar dan membawa tablet interaktif sains" }
+];
+
+export const SECONDARY_CHARACTER_ARCHETYPES = [
+  { name: "🧒 Murid Teman Belajar", desc: "Siswa cilik ceria yang antusias mengamati penjelasan dan bertanya dengan gembira" },
+  { name: "🐾 Asisten Hewan Lucu", desc: "Sahabat hewan kecil menggemaskan yang setia mendampingi dan memegang alat tulis" },
+  { name: "🌟 Maskot Bintang Cilik", desc: "Karakter bintang kecil imut tersenyum yang memberikan petunjuk dan semangat" },
+  { name: "🧑‍🤝‍🧑 Teman Diskusi Sebaya", desc: "Rekan belajar sebaya yang berdiskusi aktif memecahkan materi bersama" }
 ];
 
 interface GeneratedPrompt {
@@ -484,6 +492,9 @@ export default function App() {
   const [mascotImage, setMascotImage] = useState<string | null>(null);
   const [mascotImageName, setMascotImageName] = useState<string | null>(null);
   const [mascotImageSize, setMascotImageSize] = useState<string | null>(null);
+  const [hasSecondaryCharacter, setHasSecondaryCharacter] = useState<boolean>(false);
+  const [secondaryCharacterDesc, setSecondaryCharacterDesc] = useState<string>("");
+  const [characterRelationship, setCharacterRelationship] = useState<string>("Guru & Murid (Pemandu & Pembelajar)");
   const [styleCategoryFilter, setStyleCategoryFilter] = useState<string>("Semua");
 
   // UI operational states
@@ -870,6 +881,12 @@ export default function App() {
     setCurrentStep(2);
   };
 
+  // Select popular topic and auto-adapt learning objective to that topic
+  const handleSelectPopularTopic = (popularTopic: string) => {
+    setTopic(popularTopic);
+    setLearningObjective(deriveObjectiveFromTopic(popularTopic, subject));
+  };
+
   // Step 3 page operations
   const handleAddPage = () => {
     if (newPageName.trim()) {
@@ -1181,14 +1198,34 @@ export default function App() {
       styleClause = "clean minimalist hand-drawn doodle style, neat sketch accents, friendly educational lines";
     }
 
-    // 2. Character clause
-    let characterClause = "Left side features a friendly tutor companion smiling politely and gesturing towards the presentation card";
+    // 2. Character clause (CRITICAL: NEVER INJECT UNWANTED ROBOT)
+    let characterClause = "Left side features a friendly student tutor companion smiling politely and gesturing towards the presentation card";
     if (mascotType === 'none') {
-      characterClause = "Minimalist presentation slide UI focused purely on core diagrams and lesson content without mascot characters";
-    } else if (mascotType === 'custom' && mascotImageName) {
-      characterClause = `Left side features a friendly tutor character inspired by the reference photo ("${mascotImageName}", ${customMascot || 'tutor companion'}), smiling and gesturing towards the slide content without obscuring text`;
-    } else if (mascotType === 'custom' && customMascot) {
-      characterClause = `Left side features a friendly educational companion (${customMascot}) smiling warmly and gesturing towards the content`;
+      characterClause = "Minimalist presentation slide UI focused purely on core diagrams and lesson content without mascot characters or robots";
+    } else if (mascotType === 'custom') {
+      const hasSec = hasSecondaryCharacter && secondaryCharacterDesc.trim();
+      if (mascotImageName) {
+        if (hasSec) {
+          characterClause = `Left side features two friendly educational companions: primary tutor inspired by the reference photo ("${mascotImageName}", ${customMascot || 'tutor companion'}) and companion (${secondaryCharacterDesc}), both smiling and gesturing towards slide content without obscuring text (strictly NO robot unless explicitly specified)`;
+        } else {
+          characterClause = `Left side features a friendly tutor character inspired by the reference photo ("${mascotImageName}", ${customMascot || 'tutor companion'}), smiling and gesturing towards the slide content without obscuring text (strictly NO robot unless explicitly specified)`;
+        }
+      } else if (customMascot.trim()) {
+        if (hasSec) {
+          characterClause = `Left side features two friendly educational companions (${customMascot} and companion ${secondaryCharacterDesc}) smiling warmly and gesturing towards content (strictly NO robot unless explicitly specified)`;
+        } else {
+          characterClause = `Left side features a friendly educational companion (${customMascot}) smiling warmly and gesturing towards content (strictly NO robot unless explicitly specified)`;
+        }
+      } else {
+        characterClause = "Left side features a friendly educational companion smiling warmly and gesturing towards content without covering text";
+      }
+    } else if (mascotType === 'generate') {
+      const lowerTopic = `${topic} ${subject}`.toLowerCase();
+      const isRobotics = lowerTopic.includes('robot') || lowerTopic.includes('ai') || lowerTopic.includes('kecerdasan buatan') || lowerTopic.includes('robotika');
+      const companionArchetype = isRobotics
+        ? "a friendly little AI robot tutor"
+        : `a cheerful, friendly student tutor in neat school attire representing ${subject}`;
+      characterClause = `Left side features ${companionArchetype} smiling politely and gesturing towards the presentation card without obscuring text`;
     }
 
     // 3. Detail level & Strict Clean Layout Rules
@@ -1197,7 +1234,29 @@ export default function App() {
     // 4. Slide specific layout
     let slideSpecific = "";
     if (titleLower.includes('cover') || titleLower.includes('sampul') || index === 0) {
-      slideSpecific = `Left side features a friendly, smiling 3D robot tutor holding a book and pointing politely towards the large white information panel on the right. Right side features a very large, clean white information panel with high text contrast. Top of the panel has a blue title label "MEDIA PEMBELAJARAN INTERAKTIF". Center of the panel displays the main lesson title: "${topic}" in giant, bold, clear navy blue typography. Bottom of the panel displays "${subject} - ${ageGroup}". Background of the slide is a clean, modern soft light blue with soft ambient studio lighting, a completely pristine and professional layout with ample whitespace.`;
+      let coverVisualLeft = "";
+      if (mascotType === 'none') {
+        coverVisualLeft = `Left side features a clean, beautifully stylized conceptual educational graphic representing "${topic}" for ${subject} (modern minimalist educational visual, NO mascot character, NO robot)`;
+      } else if (mascotType === 'custom') {
+        const hasSec = hasSecondaryCharacter && secondaryCharacterDesc.trim();
+        const primaryDesc = mascotImageName
+          ? `custom character inspired by reference photo ("${mascotImageName}", ${customMascot || 'tutor companion'})`
+          : (customMascot || 'friendly custom tutor companion');
+        if (hasSec) {
+          coverVisualLeft = `Left side features the custom primary character (${primaryDesc}) alongside companion character (${secondaryCharacterDesc}), holding an educational prop and pointing politely towards the large white information panel on the right (strictly NO robot unless explicitly requested)`;
+        } else {
+          coverVisualLeft = `Left side features the custom character (${primaryDesc}) holding an educational book/prop and pointing politely towards the large white information panel on the right (strictly NO robot unless explicitly requested)`;
+        }
+      } else {
+        const lowerTopic = `${topic} ${subject}`.toLowerCase();
+        const isRobotics = lowerTopic.includes('robot') || lowerTopic.includes('ai') || lowerTopic.includes('kecerdasan buatan') || lowerTopic.includes('robotika');
+        const mascotChar = isRobotics 
+          ? "a friendly smiling 3D robot tutor" 
+          : `a friendly smiling student tutor in neat school attire representing ${subject}`;
+        coverVisualLeft = `Left side features ${mascotChar} holding an open book and pointing politely towards the large white information panel on the right`;
+      }
+
+      slideSpecific = `Opening cover slide. ${coverVisualLeft}. Right side features a very large, clean white information panel with high text contrast. Top of the panel has a blue title label "MEDIA PEMBELAJARAN INTERAKTIF". Center of the panel displays the main lesson title: "${topic}" in giant, bold, clear navy blue typography. Bottom of the panel displays "${subject} - ${ageGroup}". Background of the slide is a clean, modern soft light blue with soft ambient studio lighting, a completely pristine and professional layout with ample whitespace. NO menu lists, NO quiz questions, NO breadcrumb chains.`;
     } else if (titleLower.includes('navigasi') || titleLower.includes('menu')) {
       slideSpecific = `Main menu navigation board. Displays exactly six neat, modular white rounded card buttons organized in a balanced grid layout (2 rows of 3 columns) with clean matching icons: "1. Petunjuk" (icon: info/guide), "2. Apersepsi" (icon: lightbulb/idea), "3. Peta Konsep" (icon: map/mapping), "4. Materi" (icon: open book/content), "5. Video" (icon: movie screen/play), and "6. Kuis" (icon: game controller). Outstanding spacious layout, high contrast readability, clean typography. Highlighting 'Menu Navigasi' as the current active step in this lesson journey. Background features ${theme.bg}`;
     } else if (titleLower.includes('tujuan') || titleLower.includes('indikator')) {
@@ -1244,7 +1303,10 @@ export default function App() {
         mascot: {
           type: mascotType,
           description: customMascot,
-          imageName: mascotImageName
+          imageName: mascotImageName,
+          hasSecondaryCharacter: mascotType === 'custom' ? hasSecondaryCharacter : false,
+          secondaryDescription: (mascotType === 'custom' && hasSecondaryCharacter) ? secondaryCharacterDesc : '',
+          characterRelationship: (mascotType === 'custom' && hasSecondaryCharacter) ? characterRelationship : ''
         }
       });
     });
@@ -1271,7 +1333,10 @@ export default function App() {
         description: mascotType === 'custom' ? customMascot : '',
         imageName: mascotType === 'custom' ? mascotImageName : null,
         hasImage: !!mascotImage,
-        image: mascotType === 'custom' ? mascotImage : null
+        image: mascotType === 'custom' ? mascotImage : null,
+        hasSecondaryCharacter: mascotType === 'custom' ? hasSecondaryCharacter : false,
+        secondaryDescription: (mascotType === 'custom' && hasSecondaryCharacter) ? secondaryCharacterDesc : '',
+        characterRelationship: (mascotType === 'custom' && hasSecondaryCharacter) ? characterRelationship : ''
       }
     };
 
@@ -1542,10 +1607,10 @@ export default function App() {
               <div className="flex flex-wrap gap-2 items-center mt-2">
                 <span className="text-xs font-semibold text-forest-900/70">Topik Populer:</span>
                 <div className="flex flex-wrap gap-1.5">
-                  <button onClick={() => setTopic("Metamorfosis Kupu-Kupu")} className="text-xs bg-forest-50 hover:bg-forest-100/80 px-2.5 py-1 rounded-lg border border-forest-100 transition-all text-forest-800 cursor-pointer">🦋 Metamorfosis</button>
-                  <button onClick={() => setTopic("Sistem Tata Surya")} className="text-xs bg-forest-50 hover:bg-forest-100/80 px-2.5 py-1 rounded-lg border border-forest-100 transition-all text-forest-800 cursor-pointer">🪐 Tata Surya</button>
-                  <button onClick={() => setTopic("Fotosintesis Tumbuhan")} className="text-xs bg-forest-50 hover:bg-forest-100/80 px-2.5 py-1 rounded-lg border border-forest-100 transition-all text-forest-800 cursor-pointer">🌱 Fotosintesis</button>
-                  <button onClick={() => setTopic("Siklus Hidrologi Air")} className="text-xs bg-forest-50 hover:bg-forest-100/80 px-2.5 py-1 rounded-lg border border-forest-100 transition-all text-forest-800 cursor-pointer">💧 Siklus Air</button>
+                  <button onClick={() => handleSelectPopularTopic("Metamorfosis Kupu-Kupu")} className="text-xs bg-forest-50 hover:bg-forest-100/80 px-2.5 py-1 rounded-lg border border-forest-100 transition-all text-forest-800 cursor-pointer">🦋 Metamorfosis</button>
+                  <button onClick={() => handleSelectPopularTopic("Sistem Tata Surya")} className="text-xs bg-forest-50 hover:bg-forest-100/80 px-2.5 py-1 rounded-lg border border-forest-100 transition-all text-forest-800 cursor-pointer">🪐 Tata Surya</button>
+                  <button onClick={() => handleSelectPopularTopic("Fotosintesis Tumbuhan")} className="text-xs bg-forest-50 hover:bg-forest-100/80 px-2.5 py-1 rounded-lg border border-forest-100 transition-all text-forest-800 cursor-pointer">🌱 Fotosintesis</button>
+                  <button onClick={() => handleSelectPopularTopic("Siklus Hidrologi Air")} className="text-xs bg-forest-50 hover:bg-forest-100/80 px-2.5 py-1 rounded-lg border border-forest-100 transition-all text-forest-800 cursor-pointer">💧 Siklus Air</button>
                 </div>
               </div>
             </div>
@@ -1810,7 +1875,10 @@ export default function App() {
                   </div>
                   
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-forest-900 uppercase">Topik / Judul Materi</label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-forest-900 uppercase">Topik / Judul Materi</label>
+                      <span className="text-[10px] text-neutral-400 font-normal">Judul Pokok Pembelajaran</span>
+                    </div>
                     <input 
                       type="text"
                       value={topic}
@@ -1820,18 +1888,93 @@ export default function App() {
                     />
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-forest-900 uppercase flex items-center justify-between">
-                      <span>Tujuan Pembelajaran (Instructional Goal)</span>
-                      <span className="text-[10px] text-neutral-400 font-normal">Panduan Kognitif Materi</span>
-                    </label>
-                    <input 
-                      type="text"
-                      value={learningObjective}
-                      onChange={(e) => setLearningObjective(e.target.value)}
-                      placeholder="Contoh: Siswa mampu menganalisis konsep dan menerapkan pada studi kasus..."
-                      className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 focus:outline-hidden focus:ring-2 focus:ring-forest-700 focus:border-transparent bg-neutral-50/50 text-xs font-medium text-forest-950 placeholder:text-neutral-400"
-                    />
+                  <div className="flex flex-col gap-2 bg-[#FAF8F5]/80 p-3.5 rounded-2xl border border-[#EDE7DD]">
+                    <div className="flex flex-wrap items-center justify-between gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs font-bold text-forest-900 uppercase">
+                          Tujuan Pembelajaran (Instructional Goal)
+                        </label>
+                        {learningObjective ? (
+                          <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">
+                            Tersedia
+                          </span>
+                        ) : (
+                          <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                            <span>✏️ Mode Kustom (Ketik Sendiri)</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Action buttons: Sesuaikan dg Topik & Hapus (Kustom) */}
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setLearningObjective(deriveObjectiveFromTopic(topic, subject))}
+                          title="Sesuaikan otomatis tujuan pembelajaran dengan topik atau judul yang dipilih"
+                          className="text-[11px] font-semibold text-forest-700 hover:text-forest-900 bg-forest-50 hover:bg-forest-100 border border-forest-200 px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95"
+                        >
+                          <Wand2 className="w-3 h-3 text-forest-600" />
+                          <span>Sesuaikan dg Topik</span>
+                        </button>
+
+                        {learningObjective && (
+                          <button
+                            type="button"
+                            onClick={() => setLearningObjective("")}
+                            title="Hapus untuk menulis Tujuan Pembelajaran secara kustom"
+                            className="text-[11px] font-semibold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2 py-1 rounded-lg flex items-center gap-1 transition-all cursor-pointer active:scale-95"
+                          >
+                            <X className="w-3 h-3" />
+                            <span>Hapus (Kustom)</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="relative flex items-center">
+                      <input 
+                        type="text"
+                        value={learningObjective}
+                        onChange={(e) => setLearningObjective(e.target.value)}
+                        placeholder="Ketik tujuan pembelajaran kustom Anda di sini (atau klik 'Sesuaikan dg Topik')..."
+                        className="w-full px-4 py-2.5 pr-10 rounded-xl border border-neutral-200 focus:outline-hidden focus:ring-2 focus:ring-forest-700 focus:border-transparent bg-white text-xs font-medium text-forest-950 placeholder:text-neutral-400 shadow-2xs"
+                      />
+                      {/* Tanda X di dalam kotak input */}
+                      {learningObjective && (
+                        <button
+                          type="button"
+                          onClick={() => setLearningObjective("")}
+                          title="Hapus teks untuk mengisi tujuan pembelajaran custom"
+                          aria-label="Hapus Tujuan Pembelajaran"
+                          className="absolute right-2 p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Feedback & contextual recommendation chip */}
+                    <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-neutral-500 pt-0.5">
+                      {!learningObjective ? (
+                        <span className="text-amber-800 font-medium">
+                          ✍️ Kolom dikosongkan. Silakan ketik tujuan kustom Anda, atau klik <b>"Sesuaikan dg Topik"</b>.
+                        </span>
+                      ) : (
+                        <span className="text-neutral-500 flex items-center gap-1">
+                          Klik tanda <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded bg-rose-100 text-rose-700 text-[10px] font-bold">✕</span> jika ingin mengubah secara custom.
+                        </span>
+                      )}
+
+                      {topic.trim() && (
+                        <button
+                          type="button"
+                          onClick={() => setLearningObjective(deriveObjectiveFromTopic(topic, subject))}
+                          className="text-forest-700 hover:text-forest-900 font-medium hover:underline cursor-pointer text-[10px] flex items-center gap-1 ml-auto"
+                        >
+                          <span>Rekomendasi untuk <b>"{topic.length > 25 ? topic.substring(0, 23) + '...' : topic}"</b></span>
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* File Upload Box */}
@@ -2389,16 +2532,172 @@ export default function App() {
                     ))}
                   </div>
 
-                  {/* Kustom Mandiri: Upload Foto Karakter, 10-12 Rekomendasi Gaya, & Ide Karakter */}
+                  {/* Kustom Mandiri: Upload Foto Karakter, Konfirmasi Karakter Tambahan, 10-12 Rekomendasi Gaya, & Ide Karakter */}
                   {mascotType === 'custom' && (
                     <div className="flex flex-col gap-5 p-5 bg-[#FAF6EE]/90 border border-[#EBE3D3] rounded-3xl animate-fade-in shadow-xs">
                       
-                      {/* Bagian 1: Tombol Upload Foto Karakter */}
+                      {/* Bagian 0: PERTANYAAN WAJIB - Ingin Menambahkan Karakter Lain atau 1 Saja? */}
+                      <div className="p-4 bg-white rounded-2xl border-2 border-forest-300/80 shadow-xs flex flex-col gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-xl bg-forest-900 text-white flex items-center justify-center text-sm font-bold shadow-xs shrink-0">
+                              ❓
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-black text-forest-950 uppercase tracking-wide">
+                                Pertanyaan: Ingin Menambahkan Karakter Lain?
+                              </h4>
+                              <p className="text-[11px] text-neutral-500">
+                                Tentukan apakah Anda ingin 1 karakter utama saja atau menambahkan karakter pendamping ke-2.
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold px-2.5 py-1 rounded-full self-start sm:self-auto font-mono">
+                            🛡️ Anti-Robot: Tanpa robot otomatis
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => setHasSecondaryCharacter(false)}
+                            className={`p-3.5 rounded-xl border-2 text-left cursor-pointer transition-all flex items-start gap-3 ${
+                              !hasSecondaryCharacter 
+                                ? 'bg-forest-900 text-white border-forest-900 shadow-sm ring-2 ring-forest-700/20' 
+                                : 'bg-neutral-50/70 hover:bg-neutral-100 text-forest-950 border-neutral-200'
+                            }`}
+                          >
+                            <span className="text-xl">👤</span>
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-bold">Hanya 1 Karakter Utama</span>
+                                {!hasSecondaryCharacter && (
+                                  <span className="text-[9px] bg-emerald-500 text-white font-bold px-1.5 py-0.2 rounded-full">Pilihan Aktif</span>
+                                )}
+                              </div>
+                              <span className={`text-[10px] leading-tight mt-1 ${!hasSecondaryCharacter ? 'text-forest-200' : 'text-neutral-500'}`}>
+                                Fokus pada 1 karakter pemandu. Komposisi slide tetap bersih, teratur, dan materi mudah dipelajari.
+                              </span>
+                            </div>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setHasSecondaryCharacter(true)}
+                            className={`p-3.5 rounded-xl border-2 text-left cursor-pointer transition-all flex items-start gap-3 ${
+                              hasSecondaryCharacter 
+                                ? 'bg-forest-900 text-white border-forest-900 shadow-sm ring-2 ring-forest-700/20' 
+                                : 'bg-neutral-50/70 hover:bg-neutral-100 text-forest-950 border-neutral-200'
+                            }`}
+                          >
+                            <span className="text-xl">👥</span>
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-bold">Ya, Tambah Karakter Lain (2 Karakter)</span>
+                                {hasSecondaryCharacter && (
+                                  <span className="text-[9px] bg-amber-400 text-amber-950 font-bold px-1.5 py-0.2 rounded-full">2 Karakter</span>
+                                )}
+                              </div>
+                              <span className={`text-[10px] leading-tight mt-1 ${hasSecondaryCharacter ? 'text-forest-200' : 'text-neutral-500'}`}>
+                                Hadirkan 1 karakter pendamping tambahan (misal: murid teman belajar, asisten lucu, atau mitra diskusi).
+                              </span>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Panel Konfigurasi Karakter Pendamping (Karakter ke-2) jika diaktifkan */}
+                      {hasSecondaryCharacter && (
+                        <div className="p-4 bg-amber-50/80 border-2 border-amber-300/80 rounded-2xl flex flex-col gap-3 animate-fade-in shadow-xs">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xl">👥</span>
+                              <div>
+                                <h5 className="text-xs font-bold text-amber-950 uppercase tracking-wide">
+                                  Konfigurasi Karakter Pendamping (Karakter ke-2)
+                                </h5>
+                                <p className="text-[10px] text-amber-800">
+                                  Tentukan deskripsi karakter tambahan dan relasinya dengan karakter utama.
+                                </p>
+                              </div>
+                            </div>
+                            <button 
+                              type="button"
+                              onClick={() => setHasSecondaryCharacter(false)}
+                              className="text-[10px] text-red-600 hover:text-red-800 font-bold px-2 py-1 rounded-md hover:bg-red-100/70 transition-colors flex items-center gap-1 cursor-pointer"
+                            >
+                              <X className="w-3 h-3" /> Batal Tambah Karakter ke-2
+                            </button>
+                          </div>
+
+                          {/* Relasi Karakter */}
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[11px] font-bold text-amber-950">Relasi / Dinamika Antar Karakter:</label>
+                            <div className="flex flex-wrap gap-1.5">
+                              {[
+                                "Guru & Murid (Pemandu & Pembelajar)",
+                                "Mitra Belajar Sebaya (Teman Diskusi)",
+                                "Tutor & Sahabat Cilik",
+                                "Peneliti & Asisten Lapangan"
+                              ].map((rel, i) => (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => setCharacterRelationship(rel)}
+                                  className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-all cursor-pointer ${
+                                    characterRelationship === rel 
+                                      ? 'bg-amber-900 text-white border-amber-900 shadow-2xs' 
+                                      : 'bg-white hover:bg-amber-100 text-amber-900 border-amber-200'
+                                  }`}
+                                >
+                                  {rel}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Ide Cepat Karakter ke-2 */}
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[11px] font-bold text-amber-950">Ide Cepat Karakter Pendamping (Klik untuk mengisi):</label>
+                            <div className="flex flex-wrap gap-1.5">
+                              {SECONDARY_CHARACTER_ARCHETYPES.map((arch, i) => (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => setSecondaryCharacterDesc(arch.desc)}
+                                  className="px-2.5 py-1 bg-white hover:bg-amber-100 hover:border-amber-300 border border-amber-200 text-amber-950 rounded-lg text-[10px] font-medium cursor-pointer transition-all shadow-2xs"
+                                >
+                                  {arch.name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Deskripsi Teks Karakter ke-2 */}
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[11px] font-bold text-amber-950">
+                              Deskripsi Teks Karakter Pendamping (Karakter ke-2):
+                            </label>
+                            <input 
+                              type="text"
+                              value={secondaryCharacterDesc}
+                              onChange={(e) => setSecondaryCharacterDesc(e.target.value)}
+                              placeholder="Misal: Budi, siswa SD ceria dengan seragam sekolah yang antusias memperhatikan penjelasan..."
+                              className="w-full px-3 py-2 text-xs rounded-xl border border-amber-300 focus:outline-hidden focus:ring-1 focus:ring-amber-600 bg-white text-amber-950"
+                            />
+                            <p className="text-[10px] text-amber-700/80 italic">
+                              *Karakter ke-2 akan mendampingi karakter utama di sisi tepi slide tanpa menutupi konten teks. Dilarang robot kecuali diminta.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Bagian 1: Tombol Upload Foto Karakter Utama */}
                       <div className="flex flex-col gap-2.5 pb-4 border-b border-[#E8DFCE]">
                         <div className="flex items-center justify-between">
                           <label className="text-xs font-bold text-forest-950 flex items-center gap-1.5">
                             <Camera className="w-4 h-4 text-coral-600" />
-                            1. Unggah Foto / Gambar Karakter (Praktis & Instan):
+                            1. Unggah Foto / Gambar Karakter Utama (Praktis & Instan):
                           </label>
                           {mascotImage && (
                             <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-1 font-mono">
@@ -2532,7 +2831,7 @@ export default function App() {
                       {/* Bagian 4: Deskripsi Teks Karakter */}
                       <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-bold text-forest-950">
-                          4. Deskripsi Teks Karakter (Telah Disesuaikan Otomatis):
+                          4. Deskripsi Teks Karakter Utama (Telah Disesuaikan Otomatis):
                         </label>
                         <textarea 
                           rows={2}
@@ -2543,9 +2842,13 @@ export default function App() {
                         />
                         <p className="text-[10px] text-neutral-400">
                           {mascotImage 
-                            ? "Foto karakter telah terpasang. Teks di atas akan memperkaya pose interaktif tutor di slide." 
+                            ? "Foto karakter utama telah terpasang. Teks di atas akan memperkaya pose interaktif tutor di slide." 
                             : "Anda dapat mengetik langsung, memilih gaya, atau mengunggah foto karakter pada bagian di atas."}
                         </p>
+                        <div className="mt-1 p-2 bg-emerald-50/80 border border-emerald-200/70 rounded-xl flex items-center gap-2 text-[10px] text-emerald-900 font-medium">
+                          <span>🛡️</span>
+                          <span><strong>Jaminan Bersih & Anti-Robot:</strong> Sistem TIDAK AKAN menambahkan karakter robot kecuali Anda secara spesifik memintanya.</span>
+                        </div>
                       </div>
 
                     </div>
@@ -2576,14 +2879,59 @@ export default function App() {
                       <span className="text-xs font-bold text-forest-950">{topic || "Belum Ditentukan"}</span>
                     </div>
 
-                    {learningObjective && (
-                      <div className="flex flex-col gap-1 col-span-1 md:col-span-2">
-                        <span className="text-[10px] font-bold uppercase text-neutral-400">Tujuan Pembelajaran</span>
-                        <span className="text-xs text-forest-900 bg-white/80 px-3 py-2 rounded-xl border border-neutral-100 leading-relaxed font-sans">
-                          {learningObjective}
-                        </span>
+                    <div className="flex flex-col gap-1 col-span-1 md:col-span-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase text-neutral-400">Tujuan Pembelajaran (Instructional Goal)</span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setLearningObjective(deriveObjectiveFromTopic(topic, subject))}
+                            className="text-[10px] text-forest-700 hover:text-forest-900 font-semibold flex items-center gap-1 hover:underline cursor-pointer"
+                            title="Sesuaikan otomatis tujuan pembelajaran dengan topik"
+                          >
+                            <Wand2 className="w-2.5 h-2.5 text-forest-600" />
+                            <span>Sesuaikan dg Topik</span>
+                          </button>
+                          {learningObjective && (
+                            <button
+                              type="button"
+                              onClick={() => setLearningObjective("")}
+                              className="text-[10px] text-rose-600 hover:text-rose-800 font-semibold flex items-center gap-0.5 hover:underline cursor-pointer"
+                              title="Hapus untuk tujuan kustom"
+                            >
+                              <X className="w-2.5 h-2.5" />
+                              <span>Hapus (Kustom)</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    )}
+                      {learningObjective ? (
+                        <div className="relative group">
+                          <span className="block text-xs text-forest-900 bg-white/80 px-3 py-2 pr-8 rounded-xl border border-neutral-100 leading-relaxed font-sans">
+                            {learningObjective}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setLearningObjective("")}
+                            className="absolute right-2 top-2 p-1 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
+                            title="Klik tanda X untuk menghapus dan kustomisasi"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-amber-800 bg-amber-50/80 px-3 py-2 rounded-xl border border-amber-200/60 font-sans flex items-center justify-between">
+                          <span>✏️ <i>Tujuan Pembelajaran kustom (kosong) — slide akan menyesuaikan langsung dari topik.</i></span>
+                          <button
+                            type="button"
+                            onClick={() => setLearningObjective(deriveObjectiveFromTopic(topic, subject))}
+                            className="text-[10px] font-bold text-forest-800 underline ml-2 cursor-pointer"
+                          >
+                            Isi Otomatis
+                          </button>
+                        </div>
+                      )}
+                    </div>
 
                     <div className="flex flex-col gap-1">
                       <span className="text-[10px] font-bold uppercase text-neutral-400">Target Usia Siswa</span>
@@ -2634,16 +2982,25 @@ export default function App() {
                           <span className="text-xs font-bold text-forest-950">
                             Bahasa: {language} &middot; Maskot: {
                               mascotType === 'none' 
-                                ? "Tanpa Maskot" 
+                                ? "Tanpa Maskot (Bebas Karakter/Robot)" 
                                 : mascotType === 'generate' 
-                                  ? "AI Generated (Otomatis)" 
-                                  : `Kustom ${mascotImageName ? `[Foto: ${mascotImageName}]` : ''}`
+                                  ? "AI Generated (Adaptif Materi)" 
+                                  : hasSecondaryCharacter
+                                    ? "2 Karakter Kustom [Utama + Pendamping]"
+                                    : `1 Karakter Kustom ${mascotImageName ? `[Foto: ${mascotImageName}]` : ''}`
                             }
                           </span>
                           {mascotType === 'custom' && (
-                            <span className="text-[10px] text-neutral-500 line-clamp-1">
-                              {customMascot || (mascotImageName ? "Sesuai foto acuan visual karakter" : "Tanpa deskripsi spesifik")}
-                            </span>
+                            <div className="flex flex-col gap-0.5 mt-0.5">
+                              <span className="text-[10px] text-neutral-600 line-clamp-1">
+                                <strong>Utama:</strong> {customMascot || (mascotImageName ? "Sesuai foto acuan visual" : "Karakter tutor kustom")}
+                              </span>
+                              {hasSecondaryCharacter && (
+                                <span className="text-[10px] text-amber-800 line-clamp-1 font-medium">
+                                  <strong>Pendamping:</strong> {secondaryCharacterDesc || 'Karakter pendamping ke-2'} ({characterRelationship})
+                                </span>
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>
@@ -2928,58 +3285,89 @@ export default function App() {
                             <div className="col-span-4 flex flex-col items-center justify-center text-center">
                               {(() => {
                                 const isCover = index === 0 || titleLower.includes('cover') || titleLower.includes('sampul');
-                                if (isCover) {
+                                const lowerTop = `${topic} ${subject}`.toLowerCase();
+                                const isRobotics = lowerTop.includes('robot') || lowerTop.includes('ai') || lowerTop.includes('kecerdasan buatan') || lowerTop.includes('robotika');
+                                
+                                if (mascotType === 'none') {
                                   return (
                                     <>
-                                      {mascotType === 'custom' && mascotImage ? (
+                                      <div className="w-13 h-13 rounded-2xl bg-white/90 border border-emerald-200/60 flex items-center justify-center text-forest-800 text-xl shadow-xs">
+                                        {subject.includes('Matematika') ? '📐' : subject.includes('Bahasa') ? '📖' : subject.includes('IPS') ? '🌍' : '🔬'}
+                                      </div>
+                                      <span className="text-[8px] font-bold text-forest-950 mt-1 max-w-[85px] leading-tight text-center">
+                                        Diagram Edukatif
+                                      </span>
+                                      <span className="text-[7px] text-neutral-400">
+                                        Tanpa Maskot
+                                      </span>
+                                    </>
+                                  );
+                                }
+
+                                if (mascotType === 'custom') {
+                                  const hasSec = hasSecondaryCharacter && secondaryCharacterDesc.trim();
+                                  return (
+                                    <>
+                                      {hasSec ? (
+                                        <div className="flex items-center -space-x-2">
+                                          {mascotImage ? (
+                                            <img 
+                                              src={mascotImage} 
+                                              alt="Karakter Utama" 
+                                              className="w-11 h-11 rounded-xl object-cover border-2 border-white shadow-md ring-1 ring-forest-600/30" 
+                                            />
+                                          ) : (
+                                            <div className="w-11 h-11 rounded-xl bg-forest-100 border-2 border-white flex items-center justify-center text-base shadow-xs">
+                                              👩‍🏫
+                                            </div>
+                                          )}
+                                          <div className="w-11 h-11 rounded-xl bg-amber-100 border-2 border-white flex items-center justify-center text-base shadow-xs ring-1 ring-amber-300">
+                                            🧒
+                                          </div>
+                                        </div>
+                                      ) : mascotImage ? (
                                         <div className="relative">
                                           <img 
                                             src={mascotImage} 
                                             alt="Foto Karakter" 
                                             className="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-md ring-2 ring-forest-600/30" 
                                           />
-                                          <span className="absolute -bottom-1 -right-1 bg-blue-600 text-white text-[8px] font-bold px-1 rounded-full">
-                                            Robot 🤖
+                                          <span className="absolute -bottom-1 -right-1 bg-forest-900 text-white text-[7px] font-bold px-1.5 py-0.2 rounded-full shadow-xs">
+                                            Karakter ⭐
                                           </span>
                                         </div>
                                       ) : (
-                                        <div className="w-14 h-14 rounded-2xl bg-white/85 border-2 border-white flex flex-col items-center justify-center shadow-md animate-pulse">
-                                          <span className="text-2xl">🤖</span>
-                                          <span className="text-[7px] font-extrabold text-blue-900 tracking-tighter uppercase">3D Tutor</span>
+                                        <div className="w-13 h-13 rounded-2xl bg-white/90 border-2 border-forest-100 flex flex-col items-center justify-center shadow-xs">
+                                          <span className="text-xl">👩‍🏫</span>
+                                          <span className="text-[7px] font-extrabold text-forest-800 uppercase">Tutor</span>
                                         </div>
                                       )}
-                                      <span className="text-[8px] font-bold text-sky-950 mt-1 max-w-[85px] leading-tight text-center">
-                                        Membawa Buku & Menunjuk Panel
+                                      <span className="text-[8px] font-bold text-forest-950 mt-1 max-w-[85px] truncate">
+                                        {hasSec 
+                                          ? "2 Karakter Mitra" 
+                                          : (mascotImageName || customMascot || "Karakter Tutor")}
+                                      </span>
+                                      <span className="text-[7px] text-neutral-400">
+                                        {isCover ? "Menunjuk Panel" : "Pemandu Materi"}
                                       </span>
                                     </>
                                   );
                                 }
-                                
+
+                                // Rekomendasi AI (Adaptif materi, tanpa robot jika materi bukan robotika)
                                 return (
                                   <>
-                                    {mascotType === 'custom' && mascotImage ? (
-                                      <div className="relative">
-                                        <img 
-                                          src={mascotImage} 
-                                          alt="Foto Karakter" 
-                                          className="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-md ring-2 ring-forest-600/30" 
-                                        />
-                                        <span className="absolute -bottom-1 -right-1 bg-forest-900 text-white text-[8px] font-bold px-1 rounded-full">
-                                          Tutor
-                                        </span>
-                                      </div>
-                                    ) : mascotType === 'none' ? (
-                                      <div className="w-12 h-12 rounded-2xl bg-white/70 border border-white flex items-center justify-center text-forest-800 text-lg shadow-2xs">
-                                        📊
-                                      </div>
-                                    ) : (
-                                      <div className="w-14 h-14 rounded-2xl bg-white/80 border-2 border-white flex flex-col items-center justify-center shadow-md">
-                                        <span className="text-2xl">🎒</span>
-                                        <span className="text-[8px] font-bold text-forest-800">Tutor Cilik</span>
-                                      </div>
-                                    )}
-                                    <span className="text-[9px] font-bold text-forest-950 mt-1 max-w-[85px] truncate">
-                                      {mascotType === 'custom' ? (mascotImageName || customMascot || "Karakter Guru") : mascotType === 'none' ? "Konten Sains" : "Maskot Ramah"}
+                                    <div className="w-13 h-13 rounded-2xl bg-white/85 border-2 border-white flex flex-col items-center justify-center shadow-md">
+                                      <span className="text-xl">{isRobotics ? '🤖' : '🎒'}</span>
+                                      <span className="text-[7px] font-extrabold text-forest-900 tracking-tighter uppercase">
+                                        {isRobotics ? 'Robot AI' : 'Tutor Cilik'}
+                                      </span>
+                                    </div>
+                                    <span className="text-[8px] font-bold text-forest-950 mt-1 max-w-[85px] truncate">
+                                      {isRobotics ? "Robot Sains" : "Pemandu Siswa"}
+                                    </span>
+                                    <span className="text-[7px] text-neutral-400">
+                                      {isCover ? "Menunjuk Panel" : "Tutor Aktif"}
                                     </span>
                                   </>
                                 );

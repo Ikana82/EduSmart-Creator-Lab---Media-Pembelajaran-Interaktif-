@@ -181,7 +181,7 @@ function parseDataUrl(dataUrl: string) {
   };
 }
 
-import { buildSlideIdentity, getSubjectAdaptiveDetails } from './src/utils/slidePromptEngine.js';
+import { buildSlideIdentity, getSubjectAdaptiveDetails, compileAuthoritativeSlidePrompt } from './src/utils/slidePromptEngine.js';
 
 // Server-side fallback prompt generator strictly following Master Prompt rules
 function generateServerFallbackPrompts(payload: any) {
@@ -314,11 +314,23 @@ Keep it short so we can use it as a highly consistent character description acro
     }
 
     const pageListStr = pages.map((p: string, i: number) => `Halaman ${i + 1}: ${p}`).join('\n');
-    const mascotText = mascot?.type === 'none' 
-      ? 'Tanpa Maskot (Fokus murni diagram edukatif bersih)' 
-      : mascot?.type === 'custom'
-        ? `Karakter Kustom Berdasarkan Foto Referensi ("${mascot.imageName || 'karakter_kustom.png'}"). Deskripsi visual karakter dari foto acuan: ${analyzedMascotDesc || mascot.description || 'Karakter tutor pendamping ramah yang tersenyum'}. Pastikan ciri fisik, pakaian, spesies, dan warna karakter ini digambarkan secara konsisten dan identik di setiap slide di posisi tepi/miri tanpa menutupi konten.`
-        : `Jenis Maskot: ${mascot?.type || 'tutor'}. Deskripsi: ${mascot?.description || 'Karakter pendamping edukatif yang ramah dan sopan'}.`;
+    const has2ndChar = mascot?.type === 'custom' && mascot?.hasSecondaryCharacter && mascot?.secondaryDescription;
+    let mascotText = "";
+    if (mascot?.type === 'none') {
+      mascotText = 'Tanpa Maskot (Fokus murni diagram edukatif bersih, TANPA robot dan TANPA karakter)';
+    } else if (mascot?.type === 'custom') {
+      const primaryDesc = analyzedMascotDesc || mascot.description || (mascot.imageName ? `Karakter dari foto "${mascot.imageName}"` : 'Karakter tutor kustom');
+      if (has2ndChar) {
+        mascotText = `Dua Karakter Kustom: Karakter Utama (${primaryDesc}) didampingi Karakter Pendamping Kedua (${mascot.secondaryDescription}${mascot.characterRelationship ? `, relasi: ${mascot.characterRelationship}` : ''}). JANGAN MENAMBAHKAN KARAKTER ROBOT KECUALI PENGGUNA EKSPLISIT MEMINTA ROBOT! Pastikan kedua karakter konsisten di setiap slide pada posisi tepi tanpa menutupi materi.`;
+      } else {
+        mascotText = `Karakter Kustom Tunggal: ${primaryDesc}. JANGAN MENAMBAHKAN KARAKTER LAIN DAN JANGAN MENAMBAHKAN KARAKTER ROBOT KECUALI PENGGUNA EKSPLISIT MEMINTA ROBOT! Pastikan ciri fisik, pakaian, spesies, dan warna karakter ini digambarkan secara konsisten dan identik di setiap slide di posisi tepi tanpa menutupi konten.`;
+      }
+    } else {
+      const lowerTopic = `${topic} ${subject}`.toLowerCase();
+      const isRobotics = lowerTopic.includes('robot') || lowerTopic.includes('ai') || lowerTopic.includes('kecerdasan buatan') || lowerTopic.includes('robotika');
+      const defaultDesc = isRobotics ? 'Robot sains ramah' : `Siswa/tutor pendamping ceria berbusana sekolah rapi sesuai mata pelajaran ${subject}`;
+      mascotText = `Rekomendasi AI: ${defaultDesc}. JANGAN MENAMBAHKAN KARAKTER ROBOT KECUALI JIKA MATERI SPESIFIK TENTANG ROBOTIKA/AI ATAU PENGGUNA MEMINTANYA!`;
+    }
 
     const effectiveDetail = detailLevel || 'clean-minimalis';
 
@@ -341,6 +353,11 @@ ${pageListStr}
 - Tingkat Detail Visual: ${effectiveDetail}
 - Bahasa Pengantar: ${language}
 - Karakter/Maskot: ${mascotText}
+
+ATURAN ANTI-ROBOT & KARAKTER KUSTOM (SANGAT KETAT):
+1. DILARANG KERAS MENAMBAHKAN KARAKTER ROBOT TANPA DIMINTA! Robot hanya boleh digunakan jika pengguna secara eksplisit meminta robot atau jika topik spesifik tentang robotika/AI.
+2. Jika pengguna memilih Tanpa Maskot, DILARANG memunculkan robot atau karakter apa pun.
+3. Jika pengguna memilih Karakter Kustom, gunakan karakter yang dipilih pengguna (dan karakter kedua jika diminta). JANGAN mengubahnya menjadi robot!
 
 ATURAN ADAPTASI MATA PELAJARAN DAN TEMA (SANGAT KETAT):
 1. Seluruh desain WAJIB menyesuaikan materi yang dimasukkan pengguna.
@@ -374,7 +391,10 @@ STRICT SLIDE-TYPE ROUTING & VISUAL BLUEPRINT RULES:
 Setiap slide HARUS mempunyai layout dan tujuan visual yang unik sesuai jenis halamannya:
 1. COVER (Halaman 1):
    - Format: Landscape 16:9 / Portrait 9:16.
-   - Sisi kiri: Robot tutor 3D yang ramah, membawa buku dan menunjuk panel informasi di kanan.
+   - Sisi kiri:
+     * Jika Tanpa Maskot: Ilustrasi konsep/diagram ilmiah minimalis yang elegan dan relevan dengan materi "${topic}" (DILARANG menambahkan karakter/robot).
+     * Jika Karakter Kustom: Karakter kustom yang ditentukan pengguna (dan karakter pendamping kedua jika ada) memegang buku/properti edukatif dan menyapa ramah. DILARANG MENAMBAHKAN ROBOT jika pengguna tidak meminta robot!
+     * Jika Rekomendasi AI: Karakter tutor siswa berseragam rapi yang ramah (atau robot HANYA JIKA materi berkaitan dengan robotika/AI).
    - Sisi kanan: Panel putih rounded besar dengan teks kontras tinggi. Label biru "MEDIA PEMBELAJARAN INTERAKTIF", Judul utama "${topic}" huruf besar tebal warna navy, bawah panel "${subject} - ${ageGroup}".
    - DILARANG menampilkan menu, kuis, atau breadcrumb.
 
@@ -409,9 +429,13 @@ Setiap slide HARUS mempunyai layout dan tujuan visual yang unik sesuai jenis hal
     - 3 kartu ringkasan intisari materi dan tombol "SELESAI & ULANGI".
 
 OUTPUT FORMAT UNTUK SETIAP SLIDE:
-1. cleanPrompt: Prompt bahasa Inggris murni yang mengalir alami, siap paste langsung ke Midjourney v6, Canva Magic Media, Imagen 3, atau DALL-E 3.
-   - DILARANG mencantumkan label administratif seperti "Style:", "Layout:", "Background:", "Header Text:".
-   - Wajib menyertakan aspek rasio: ${layout === 'portrait' ? '9:16 portrait ratio' : '16:9 landscape ratio'}.
+1. cleanPrompt: Prompt visual lengkap yang menggabungkan deskripsi visual DENGAN bagian 'EXACT TEXT TO DISPLAY (VERBATIM ON SLIDE UI)' yang memuat seluruh teks yang tampil pada preview slide:
+   - Header / Title
+   - Subjudul / Metadata (Mata Pelajaran & Jenjang)
+   - Poin Isi Materi aktual yang ada di slide
+   - Teks Tombol Aksi
+   - Durasi / Estimasi Waktu
+   Prompt ini siap pakai untuk Midjourney v6, Canva Magic Media, Imagen 3, atau DALL-E 3 dengan rasio ${layout === 'portrait' ? '9:16 portrait ratio' : '16:9 landscape ratio'}.
 2. midjourneyPrompt: cleanPrompt + " --ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw"
 3. illustrationDesc: Panduan spesifikasi tata letak manual bahasa Indonesia (Layout, Latar, Kartu Konten, Karakter, Tombol, Palet Warna).
 4. canvaKeywords: 3-5 kata kunci pencarian aset Canva bahasa Inggris relevan.
@@ -437,7 +461,7 @@ Harap kembalikan dalam struktur JSON Array valid.`;
             properties: {
               pageTitle: { type: Type.STRING },
               headerText: { type: Type.STRING },
-              cleanPrompt: { type: Type.STRING, description: "Prompt bahasa Inggris murni ultra-clean siap pakai untuk Canva AI / Midjourney / DALL-E" },
+              cleanPrompt: { type: Type.STRING, description: "Prompt visual lengkap beserta bagian EXACT TEXT TO DISPLAY siap pakai untuk Canva AI / Midjourney / DALL-E" },
               midjourneyPrompt: { type: Type.STRING, description: "Prompt Midjourney lengkap dengan flag parameter" },
               illustrationDesc: { type: Type.STRING, description: "Panduan spesifikasi layout terstruktur bahasa Indonesia" },
               canvaKeywords: { type: Type.STRING, description: "Kata kunci pencarian aset di Canva" },
@@ -477,14 +501,61 @@ Harap kembalikan dalam struktur JSON Array valid.`;
 
     const parsedPrompts = JSON.parse(textOutput.trim());
     const sanitizedPrompts = parsedPrompts.map((p: any, idx: number) => {
-      const cleanHeader = sanitizeHeaderText(p.headerText);
-      const fallbackTitle = pages[idx] || p.pageTitle || "Materi Pembelajaran";
+      const pageTitle = pages[idx] || p.pageTitle || "Materi Pembelajaran";
+      const blueprint = buildSlideIdentity(pageTitle, idx, pages.length, {
+        subject,
+        topic,
+        ageGroup,
+        learningObjective,
+        pages,
+        layout,
+        visualStyle,
+        detailLevel,
+        mascot
+      });
+
+      const cleanHeader = sanitizeHeaderText(p.headerText) || blueprint.headerText;
+      const contentList = p.slideContent && Array.isArray(p.slideContent) && p.slideContent.length > 0 
+        ? p.slideContent 
+        : blueprint.slideContent;
+      const navBtn = p.navigationButtons || blueprint.navigationButtons;
+      const estTime = p.estimatedTime || blueprint.estimatedTime;
+      const qData = p.quizData || blueprint.quizData;
+
+      const unifiedCleanPrompt = compileAuthoritativeSlidePrompt({
+        slideType: blueprint.slideType,
+        headerText: cleanHeader,
+        topic,
+        subject,
+        ageGroup,
+        layout,
+        visualStyle,
+        styleClause: visualStyle,
+        characterClause: blueprint.cleanPrompt,
+        slideSpecificLayoutPrompt: blueprint.headerText,
+        theme: getSubjectAdaptiveDetails(subject, topic),
+        slideContent: contentList,
+        visibleTexts: blueprint.visibleTexts,
+        navigationButtons: navBtn,
+        estimatedTime: estTime,
+        quizData: qData,
+        conceptMapData: blueprint.conceptMapData,
+        guidePoints: blueprint.guidePoints
+      });
+
       return {
+        ...blueprint,
         ...p,
-        headerText: cleanHeader || fallbackTitle.replace(/^\d+[\s.]*-?\s*/, ""),
-        cleanPrompt: sanitizeHeaderText(p.cleanPrompt),
-        midjourneyPrompt: sanitizeHeaderText(p.midjourneyPrompt),
-        illustrationDesc: sanitizeHeaderText(p.illustrationDesc)
+        headerText: cleanHeader,
+        cleanPrompt: unifiedCleanPrompt,
+        midjourneyPrompt: `${unifiedCleanPrompt} --ar ${layout === 'portrait' ? '9:16' : '16:9'} --v 6.0 --style raw`,
+        illustrationDesc: sanitizeHeaderText(p.illustrationDesc || blueprint.illustrationDesc),
+        slideContent: contentList,
+        navigationButtons: navBtn,
+        estimatedTime: estTime,
+        quizData: qData,
+        conceptMapData: blueprint.conceptMapData,
+        guidePoints: blueprint.guidePoints
       };
     });
     return res.json({ prompts: sanitizedPrompts, usedModel: usedModel });
